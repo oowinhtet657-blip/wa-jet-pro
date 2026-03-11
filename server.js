@@ -84,6 +84,39 @@ app.post('/disconnect', async (req, res) => {
   }
 });
 
+// DELETE /cache — hapus .wwebjs_cache (browser cache WA)
+app.delete('/cache', (req, res) => {
+  const cachePath = path.join(__dirname, '.wwebjs_cache');
+  try {
+    if (fs.existsSync(cachePath)) {
+      fs.rmSync(cachePath, { recursive: true, force: true });
+      console.log('🧹 .wwebjs_cache dihapus');
+    }
+    res.json({ status: 'ok', msg: 'Cache browser WA berhasil dihapus' });
+  } catch (err) {
+    res.status(500).json({ status: 'error', msg: err.message });
+  }
+});
+
+// DELETE /hasil — hapus semua file output di folder hasil/
+app.delete('/hasil', (req, res) => {
+  const dir = path.join(__dirname, 'hasil');
+  try {
+    if (fs.existsSync(dir)) {
+      fs.readdirSync(dir).forEach(f => fs.unlinkSync(path.join(dir, f)));
+    }
+    // hapus juga file root lama
+    ['hasil.json', 'hasil.xlsx', 'hasil.txt'].forEach(f => {
+      const p = path.join(__dirname, f);
+      if (fs.existsSync(p)) fs.unlinkSync(p);
+    });
+    console.log('🧹 File hasil dihapus');
+    res.json({ status: 'ok', msg: 'File output berhasil dihapus' });
+  } catch (err) {
+    res.status(500).json({ status: 'error', msg: err.message });
+  }
+});
+
 app.post('/cek', async (req, res) => {
   try {
     const raw = req.body.nomor;

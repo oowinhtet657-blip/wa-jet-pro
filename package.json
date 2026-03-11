@@ -1,4 +1,12 @@
 {
+  "scripts": {
+    "start": "node server.js",
+    "clean": "node clean.js all",
+    "clean:cache": "node clean.js cache",
+    "clean:session": "node clean.js session",
+    "clean:hasil": "node clean.js hasil",
+    "maintenance": "node clean.js"
+  },
   "dependencies": {
     "express": "^4.21.2",
     "ngrok": "^5.0.0-beta.2",

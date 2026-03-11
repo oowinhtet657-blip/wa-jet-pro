@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WA Tools — Dashboard</title>
+  <title>WA JET-PRO — Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <style>
@@ -249,6 +249,33 @@
                 <thead><tr><th>#</th><th>Nomor</th><th>Status</th><th>Tipe</th></tr></thead>
                 <tbody id="lastResultBody"></tbody>
               </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+            Maintenance &amp; Cache
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-start;">
+            <div style="flex:1;min-width:200px;">
+              <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:0.5rem;">Hapus cache browser WhatsApp Web. Gunakan jika koneksi WA bermasalah atau lemot.</div>
+              <button class="btn btn-ghost" id="btnCleanCache" style="width:100%;">
+                🧹 Bersihkan WA Cache
+              </button>
+            </div>
+            <div style="flex:1;min-width:200px;">
+              <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:0.5rem;">Hapus semua file hasil cek &amp; kirim (folder hasil/, .json, .xlsx). Data tidak bisa dikembalikan.</div>
+              <button class="btn btn-ghost" id="btnCleanHasil" style="width:100%;">
+                🗑️ Hapus File Output
+              </button>
+            </div>
+            <div style="flex:1;min-width:200px;">
+              <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:0.5rem;">Hapus pesan masuk dari inbox (hanya data di memori, tidak menghapus chat WA asli).</div>
+              <button class="btn btn-ghost" id="btnCleanInbox" style="width:100%;">
+                📭 Kosongkan Inbox
+              </button>
             </div>
           </div>
         </div>
@@ -559,6 +586,37 @@
         showToast('Koneksi WA diputus');
         loadQr();
       } catch { showToast('Gagal memutus koneksi'); }
+    });
+
+    // ===== MAINTENANCE =====
+    document.getElementById('btnCleanCache').addEventListener('click', async () => {
+      if (!confirm('Hapus .wwebjs_cache? Server akan menghapus cache browser WA.\n(WA tidak perlu scan QR ulang)')) return;
+      try {
+        const r = await fetch('/cache', { method: 'DELETE' });
+        const d = await r.json();
+        showToast(d.status === 'ok' ? '✅ ' + d.msg : '❌ ' + d.msg);
+      } catch { showToast('❌ Gagal menghapus cache'); }
+    });
+
+    document.getElementById('btnCleanHasil').addEventListener('click', async () => {
+      if (!confirm('Hapus semua file hasil? Aksi ini tidak bisa dibatalkan.')) return;
+      try {
+        const r = await fetch('/hasil', { method: 'DELETE' });
+        const d = await r.json();
+        showToast(d.status === 'ok' ? '✅ ' + d.msg : '❌ ' + d.msg);
+      } catch { showToast('❌ Gagal menghapus file hasil'); }
+    });
+
+    document.getElementById('btnCleanInbox').addEventListener('click', async () => {
+      if (!confirm('Kosongkan inbox? Pesan yang sudah masuk akan dihapus dari tampilan.')) return;
+      try {
+        await fetch('/messages', { method: 'DELETE' });
+        inboxAll = []; inboxLastTs = 0; inboxUnread = 0;
+        renderInbox();
+        const badge = document.getElementById('inboxBadge');
+        if (badge) badge.style.display = 'none';
+        showToast('✅ Inbox dikosongkan');
+      } catch { showToast('❌ Gagal mengosongkan inbox'); }
     });
 
     // ===== INBOX =====
