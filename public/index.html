@@ -114,6 +114,9 @@
     .empty-state { text-align:center; padding:1.75rem; color:var(--text-dim); font-size:0.8rem; }
     .toast { position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%) translateY(80px); background:var(--card-bg); border:1px solid var(--accent); color:var(--accent); padding:0.5rem 1.25rem; border-radius:var(--radius-sm); font-size:0.8rem; font-weight:600; box-shadow:0 0 20px rgba(0,212,255,0.2); opacity:0; transition:transform 0.3s,opacity 0.3s; z-index:999; pointer-events:none; }
     .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+    select { width:100%; padding:0.5rem 0.875rem; background:rgba(0,0,0,0.35); border:1px solid var(--card-border); border-radius:var(--radius-sm); color:var(--text-bright); font-family:'Inter',sans-serif; font-size:0.875rem; cursor:pointer; -webkit-appearance:none; appearance:none; transition:border-color 0.2s; }
+    select:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 2px rgba(0,212,255,0.1); }
+    select option { background:var(--card-bg); color:var(--text-bright); }
     ::-webkit-scrollbar { width:4px; }
     ::-webkit-scrollbar-track { background:transparent; }
     ::-webkit-scrollbar-thumb { background:var(--card-border); border-radius:2px; }
@@ -167,6 +170,10 @@
       <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
       <span>Pesan Masuk</span>
       <span id="inboxBadge" style="display:none;margin-left:auto;background:var(--danger);color:#fff;font-size:0.55rem;font-weight:700;padding:1px 5px;border-radius:999px;min-width:16px;text-align:center;"></span>
+    </a>
+    <a class="nav-item" data-page="akun">
+      <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+      <span>Kelola Akun</span>
     </a>
 
     <div class="sidebar-bottom">
@@ -262,19 +269,19 @@
             <div style="flex:1;min-width:200px;">
               <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:0.5rem;">Hapus cache browser WhatsApp Web. Gunakan jika koneksi WA bermasalah atau lemot.</div>
               <button class="btn btn-ghost" id="btnCleanCache" style="width:100%;">
-                🧹 Bersihkan WA Cache
+                 Bersihkan WA Cache
               </button>
             </div>
             <div style="flex:1;min-width:200px;">
               <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:0.5rem;">Hapus semua file hasil cek &amp; kirim (folder hasil/, .json, .xlsx). Data tidak bisa dikembalikan.</div>
               <button class="btn btn-ghost" id="btnCleanHasil" style="width:100%;">
-                🗑️ Hapus File Output
+                 Hapus File Output
               </button>
             </div>
             <div style="flex:1;min-width:200px;">
               <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:0.5rem;">Hapus pesan masuk dari inbox (hanya data di memori, tidak menghapus chat WA asli).</div>
               <button class="btn btn-ghost" id="btnCleanInbox" style="width:100%;">
-                📭 Kosongkan Inbox
+                 Kosongkan Inbox
               </button>
             </div>
           </div>
@@ -333,6 +340,10 @@
             <div class="form-label">Daftar Nomor (pisah baris / koma)</div>
             <textarea id="nomor" style="height:160px;" placeholder="6281234567890&#10;6289876543210&#10;62812xxxxxxx"></textarea>
           </div>
+          <div class="form-group">
+            <div class="form-label">Gunakan Akun</div>
+            <select id="cekAccountId"><option value="">── Otomatis (akun siap pertama) ──</option></select>
+          </div>
           <button type="button" class="btn btn-primary btn-full" id="submitBtn">
             <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
             <span>Mulai Cek</span>
@@ -379,6 +390,10 @@
           <div class="form-group">
             <div class="form-label">Pesan</div>
             <textarea id="kirimPesan" style="height:140px;" placeholder="Tulis pesan yang ingin dikirim..."></textarea>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Gunakan Akun</div>
+            <select id="kirimAccountId"><option value="">── Otomatis (akun siap pertama) ──</option></select>
           </div>
           <button type="button" class="btn btn-primary btn-full" id="kirimBtn">
             <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
@@ -445,6 +460,34 @@
         </div>
       </div>
 
+      <!-- ====== KELOLA AKUN ====== -->
+      <div class="page" id="page-akun">
+        <div class="card">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+            Tambah Akun WhatsApp
+          </div>
+          <div style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap;">
+            <div style="flex:1;min-width:200px;">
+              <div class="form-label" style="margin-bottom:0.375rem;">Label Akun</div>
+              <input id="newAkunLabel" type="text" placeholder="misal: Nomor Pribadi, Bisnis 1..."
+                style="width:100%;padding:0.5rem 0.875rem;background:rgba(0,0,0,0.35);border:1px solid var(--card-border);border-radius:var(--radius-sm);color:var(--text-bright);font-family:'Inter',sans-serif;font-size:0.875rem;outline:none;transition:border-color 0.2s;"
+                onkeydown="if(event.key==='Enter')addAccount()"
+                onfocus="this.style.borderColor='var(--accent)'"
+                onblur="this.style.borderColor='var(--card-border)'">
+            </div>
+            <button class="btn btn-primary" onclick="addAccount()" style="white-space:nowrap;flex-shrink:0;">
+              <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+              Tambah Akun
+            </button>
+          </div>
+          <div style="font-size:0.7rem;color:var(--text-dim);margin-top:0.75rem;">⚠️ Setiap akun membuka instance Chrome terpisah — pastikan RAM cukup (~200-300MB per akun).</div>
+        </div>
+        <div id="akunList">
+          <div class="empty-state" id="akunEmpty">Belum ada akun — tambah akun di atas</div>
+        </div>
+      </div>
+
       <!-- ====== PESAN MASUK ====== -->
       <div class="page" id="page-pesan">
         <div class="card">
@@ -498,6 +541,21 @@
     </div>
   </div>
 
+  <!-- MODAL QR AKUN -->
+  <div id="akunQrModal" style="display:none;position:fixed;inset:0;z-index:1001;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);align-items:center;justify-content:center;" onclick="if(event.target===this)closeAkunQrModal()">
+    <div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius);padding:1.5rem;width:100%;max-width:360px;margin:1rem;text-align:center;box-shadow:0 0 40px rgba(0,212,255,0.1);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+        <div style="font-family:'Orbitron',sans-serif;font-size:0.75rem;font-weight:700;color:var(--accent);">SCAN QR WHATSAPP</div>
+        <button onclick="closeAkunQrModal()" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1.2rem;line-height:1;">&times;</button>
+      </div>
+      <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:1rem;" id="akunQrLabel">Scan dengan WhatsApp</div>
+      <div id="akunQrState" style="min-height:260px;display:flex;align-items:center;justify-content:center;padding:0.5rem;">
+        <div style="display:inline-block;width:32px;height:32px;border:3px solid rgba(0,212,255,0.15);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+      </div>
+      <div style="font-size:0.6875rem;color:var(--text-dim);margin-top:0.75rem;">QR refresh otomatis setiap 3 detik</div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <script>
@@ -533,8 +591,10 @@
         const lbl = document.getElementById('sidebarStatus');
         const badge = document.getElementById('waBadge');
         if (data.connected) {
-          dot.classList.add('online'); lbl.textContent = 'Connected';
-          badge.className = 'wa-badge connected'; badge.textContent = '✓ WA Terhubung';
+          dot.classList.add('online');
+          lbl.textContent = data.readyCount > 1 ? `${data.readyCount} Akun` : 'Connected';
+          badge.className = 'wa-badge connected';
+          badge.textContent = data.readyCount > 1 ? `✓ ${data.readyCount} Akun Aktif` : '✓ WA Terhubung';
         } else {
           dot.classList.remove('online'); lbl.textContent = 'Disconnected';
           badge.className = 'wa-badge'; badge.textContent = '⚡ Menunggu WA...';
@@ -774,7 +834,7 @@
           </tr>`).join('');
     }
     renderDashboard();
-    const pageNames = { dashboard:'Dashboard', rapih:'Rapihkan Nomor', cek:'Cek WA', kirim:'Kirim Pesan', connect:'Connect WA', pesan:'Pesan Masuk' };
+    const pageNames = { dashboard:'Dashboard', rapih:'Rapihkan Nomor', cek:'Cek WA', kirim:'Kirim Pesan', connect:'Connect WA', pesan:'Pesan Masuk', akun:'Kelola Akun' };
     document.querySelectorAll('.nav-item').forEach(item => {
       item.addEventListener('click', e => {
         e.preventDefault();
@@ -801,6 +861,7 @@
           if (badge) badge.style.display = 'none';
           renderInbox();
         }
+        if (page === 'akun') loadAccounts();
       });
     });
 
@@ -883,7 +944,8 @@
       document.getElementById('hasilBody').innerHTML = `<tr class="processing-row"><td colspan="3"><div class="process-content"><div class="spinner" style="display:inline-block;border:2px solid rgba(0,212,255,0.2);border-top-color:var(--accent);"></div><span>Sedang mengecek nomor...</span></div></td></tr>`;
 
       try {
-        const res = await fetch('/cek', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ nomor: cleaned.join('\n') }) });
+        const cekAccId = document.getElementById('cekAccountId')?.value || '';
+        const res = await fetch('/cek', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ nomor: cleaned.join('\n'), ...(cekAccId && { accountId: cekAccId }) }) });
         const data = await res.json();
         if (data.status === 'ok') {
           let terdaftar = 0, tidak = 0, err = 0;
@@ -952,7 +1014,8 @@
       document.getElementById('kirimBody').innerHTML = `<tr class="processing-row"><td colspan="3"><div class="process-content"><div class="spinner" style="display:inline-block;border:2px solid rgba(0,212,255,0.2);border-top-color:var(--accent);"></div><span>Sedang mengirim pesan...</span></div></td></tr>`;
 
       try {
-        const res = await fetch('/kirim', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ nomor, pesan }) });
+        const kirimAccId = document.getElementById('kirimAccountId')?.value || '';
+        const res = await fetch('/kirim', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ nomor, pesan, ...(kirimAccId && { accountId: kirimAccId }) }) });
         const data = await res.json();
         if (data.status === 'ok') {
           let terkirim = 0, gagal = 0;
@@ -980,6 +1043,152 @@
       }
       bIcon.style.display = ''; sp.style.display = 'none'; bText.textContent = 'Kirim Pesan'; btn.disabled = false;
     });
+
+    // ===== KELOLA AKUN =====
+    async function loadAccounts() {
+      try {
+        const res = await fetch('/accounts');
+        const data = await res.json();
+        renderAccountCards(data.accounts);
+        populateAccountDropdowns(data.accounts);
+      } catch {}
+    }
+
+    function populateAccountDropdowns(accounts) {
+      ['cekAccountId', 'kirimAccountId'].forEach(selId => {
+        const sel = document.getElementById(selId);
+        if (!sel) return;
+        const cur = sel.value;
+        sel.innerHTML = '<option value="">── Otomatis (akun siap pertama) ──</option>';
+        accounts.filter(a => a.status === 'ready').forEach(a => {
+          const opt = document.createElement('option');
+          opt.value = a.id;
+          opt.textContent = a.label + (a.phone ? ' (+' + a.phone + ')' : '');
+          sel.appendChild(opt);
+        });
+        if (cur && accounts.find(a => a.id === cur)) sel.value = cur;
+      });
+    }
+
+    function renderAccountCards(accounts) {
+      const list = document.getElementById('akunList');
+      const empty = document.getElementById('akunEmpty');
+      if (!list) return;
+      if (accounts.length === 0) {
+        if (empty) empty.style.display = 'block';
+        [...list.querySelectorAll('.akun-card')].forEach(c => c.remove());
+        return;
+      }
+      if (empty) empty.style.display = 'none';
+      const incoming = new Set(accounts.map(a => a.id));
+      [...list.querySelectorAll('.akun-card')].forEach(c => { if (!incoming.has(c.dataset.id)) c.remove(); });
+      accounts.forEach(acc => {
+        let card = list.querySelector('.akun-card[data-id="' + acc.id + '"]');
+        const isNew = !card;
+        if (isNew) {
+          card = document.createElement('div');
+          card.className = 'card akun-card';
+          card.dataset.id = acc.id;
+          card.style.marginBottom = '0.75rem';
+        }
+        const sc = acc.status === 'ready' ? 'var(--success)' : acc.status === 'connecting' ? 'var(--warning)' : 'var(--danger)';
+        const sl = acc.status === 'ready' ? 'Terhubung' : acc.status === 'connecting' ? 'Menghubungkan...' : 'Terputus';
+        const btnQr = (acc.hasQr || acc.status === 'connecting') ? `<button class="btn btn-ghost" onclick="openAkunQr('${acc.id}','${acc.label.replace(/'/g,"\\'")}')">📷 Scan QR</button>` : '';
+        const btnPutus = acc.status === 'ready' ? `<button class="btn btn-ghost" onclick="disconnectAccount('${acc.id}')">⏏ Putus</button>` : '';
+        const btnRecon = acc.status === 'disconnected' ? `<button class="btn btn-ghost" onclick="reconnectAccount('${acc.id}')">🔄 Reconnect</button>` : '';
+        const btnDel = `<button class="btn btn-ghost" onclick="deleteAccount('${acc.id}','${acc.label.replace(/'/g,"\\'")}')">🗑</button>`;
+        card.innerHTML =
+          '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;">' +
+            '<div style="display:flex;align-items:center;gap:0.75rem;flex:1;min-width:180px;">' +
+              '<div style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.3);border:2px solid ' + sc + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
+                '<svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:' + sc + ';"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>' +
+              '</div>' +
+              '<div>' +
+                '<div style="font-weight:600;font-size:0.875rem;color:var(--text-bright);">' + acc.label + '</div>' +
+                '<div style="font-size:0.7rem;color:var(--text-dim);margin-top:2px;">' + (acc.phone ? '+' + acc.phone : 'Belum terhubung') + '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">' +
+              '<span style="font-size:0.7rem;font-weight:700;color:' + sc + ';padding:0.2rem 0.625rem;border-radius:999px;background:' + sc + '22;border:1px solid ' + sc + '44;">' + sl + '</span>' +
+              btnQr + btnPutus + btnRecon + btnDel +
+            '</div>' +
+          '</div>';
+        if (isNew) list.appendChild(card);
+      });
+    }
+
+    async function addAccount() {
+      const label = (document.getElementById('newAkunLabel')?.value || '').trim();
+      if (!label) return showToast('Isi label akun dahulu');
+      try {
+        const res = await fetch('/accounts', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ label }) });
+        const data = await res.json();
+        if (data.status === 'ok') {
+          document.getElementById('newAkunLabel').value = '';
+          showToast('✅ Akun "' + label + '" ditambahkan — tunggu QR...');
+          loadAccounts();
+        } else { showToast('❌ ' + (data.msg || 'Gagal')); }
+      } catch { showToast('❌ Koneksi error'); }
+    }
+
+    async function deleteAccount(id, label) {
+      if (!confirm('Hapus akun "' + label + '"? Session WA akan dihapus.')) return;
+      try {
+        await fetch('/accounts/' + id, { method:'DELETE' });
+        showToast('🗑 Akun "' + label + '" dihapus');
+        loadAccounts();
+      } catch { showToast('❌ Gagal menghapus'); }
+    }
+
+    async function disconnectAccount(id) {
+      try { await fetch('/accounts/' + id + '/disconnect', { method:'POST' }); showToast('⏏ Akun diputus'); loadAccounts(); } catch {}
+    }
+
+    async function reconnectAccount(id) {
+      try { await fetch('/accounts/' + id + '/reconnect', { method:'POST' }); showToast('🔄 Mencoba reconnect...'); loadAccounts(); } catch {}
+    }
+
+    let akunQrInterval = null;
+    async function openAkunQr(id, label) {
+      const modal = document.getElementById('akunQrModal');
+      if (!modal) return;
+      document.getElementById('akunQrLabel').textContent = 'Akun: ' + label;
+      document.getElementById('akunQrState').innerHTML = '<div style="display:inline-block;width:32px;height:32px;border:3px solid rgba(0,212,255,0.15);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;"></div>';
+      modal.style.display = 'flex';
+      const fetchQr = async () => {
+        try {
+          const res = await fetch('/accounts/' + id + '/qr');
+          const d = await res.json();
+          if (d.status === 'connected') {
+            document.getElementById('akunQrState').innerHTML = '<div style="padding:2rem;"><div style="font-size:2.5rem;">✅</div><div style="color:var(--success);font-weight:700;margin-top:0.75rem;">Berhasil Terhubung!</div><div style="color:var(--text-dim);font-size:0.75rem;margin-top:0.375rem;">+' + d.phone + '</div></div>';
+            clearInterval(akunQrInterval); akunQrInterval = null;
+            setTimeout(() => { closeAkunQrModal(); loadAccounts(); }, 2000);
+          } else if (d.status === 'qr' && d.qr) {
+            const st = document.getElementById('akunQrState');
+            let canvas = st.querySelector('canvas');
+            if (!canvas) {
+              st.innerHTML = '';
+              canvas = document.createElement('canvas');
+              canvas.style.cssText = 'border-radius:8px;border:2px solid var(--accent);display:block;';
+              st.appendChild(canvas);
+            }
+            if (typeof QRCode !== 'undefined') QRCode.toCanvas(canvas, d.qr, { width:240, margin:0, color:{dark:'#000000',light:'#ffffff'} });
+          }
+        } catch {}
+      };
+      await fetchQr();
+      if (akunQrInterval) clearInterval(akunQrInterval);
+      akunQrInterval = setInterval(fetchQr, 3000);
+    }
+
+    function closeAkunQrModal() {
+      if (akunQrInterval) { clearInterval(akunQrInterval); akunQrInterval = null; }
+      const m = document.getElementById('akunQrModal');
+      if (m) m.style.display = 'none';
+    }
+
+    loadAccounts();
+    setInterval(loadAccounts, 4000);
   </script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 </body>

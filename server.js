@@ -1,11 +1,12 @@
-const express = require('express');
+﻿const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const cekNomor = require('./bot');
+
 const app = express();
-const PORT = process.env.PORT || 3000; // Render pakai port dari env
+const PORT = process.env.PORT || 3000;
 
 // Pastikan folder hasil ada
 const folderPath = path.join(__dirname, 'hasil');
@@ -17,32 +18,177 @@ if (!fs.existsSync(folderPath)) {
 app.use(express.json());
 app.use(express.static('public'));
 
-// Fungsi normalisasi nomor HP
+// ====== MULTI-AKUN STATE ======
+// clientsMap: { [id]: { id, label, instance, status, qr, phone } }
+global.clientsMap = {};
+global.inboxMessages = [];
+
+const ACCOUNTS_FILE = path.join(__dirname, 'accounts.json');
+function loadAccountsList() {
+  try { return JSON.parse(fs.readFileSync(ACCOUNTS_FILE, 'utf-8')); }
+  catch { return []; }
+}
+function saveAccountsList() {
+  const list = Object.values(global.clientsMap).map(a => ({ id: a.id, label: a.label }));
+  fs.writeFileSync(ACCOUNTS_FILE, JSON.stringify(list, null, 2));
+}
+
 function normalizeNumber(raw) {
   let num = raw.replace(/[^0-9]/g, '');
   if (!num) return null;
-  // 08xx -> 628xx
   if (num.startsWith('0')) num = '62' + num.slice(1);
-  // 8xx (tanpa awalan) -> 628xx
   else if (num.startsWith('8') && num.length >= 10 && num.length <= 13) num = '62' + num;
   return num;
 }
-
-// Validasi nomor HP Indonesia (62 + 8xx + 9-12 digit = total 11-14 digit)
 function isValidIndonesianMobile(num) {
   return /^628[0-9]{8,11}$/.test(num);
 }
 
-global.currentQr = null;
-global.inboxMessages = [];
+function createClient(id, label) {
+  const sessionPath = path.join(__dirname, `_session_${id}`);
+  const instance = new Client({
+    authStrategy: new LocalAuth({ clientId: id, dataPath: sessionPath }),
+    puppeteer: {
+      executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      headless: true
+    }
+  });
 
-app.get('/status', (req, res) => {
-  res.json({ connected: !!global.client, hasQr: !!global.currentQr });
+  const entry = { id, label, instance, status: 'connecting', qr: null, phone: '' };
+  global.clientsMap[id] = entry;
+  saveAccountsList();
+
+  instance.on('qr', (qr) => {
+    entry.qr = qr;
+    entry.status = 'connecting';
+    console.log(`\n📱 [${label}] QR siap — scan di browser`);
+    qrcode.generate(qr, { small: true });
+  });
+
+  instance.on('ready', async () => {
+    entry.status = 'ready';
+    entry.qr = null;
+    try {
+      const info = instance.info;
+      entry.phone = info ? info.wid.user : '';
+    } catch {}
+    console.log(`✅ [${label}] WA siap! (${entry.phone})`);
+  });
+
+  instance.on('auth_failure', () => {
+    entry.status = 'disconnected';
+    entry.qr = null;
+    console.error(`❌ [${label}] Auth gagal`);
+  });
+
+  instance.on('disconnected', (reason) => {
+    entry.status = 'disconnected';
+    entry.qr = null;
+    console.log(`⚠️ [${label}] Disconnected: ${reason}`);
+  });
+
+  instance.on('message', async (msg) => {
+    try {
+      const contact = await msg.getContact();
+      const chat = await msg.getChat();
+      const msgEntry = {
+        ts: Date.now(),
+        id: msg.id._serialized,
+        accountId: id,
+        accountLabel: label,
+        from: contact.id.user || msg.from.replace(/@c\.us|@g\.us|@lid/g, ''),
+        name: contact.pushname || contact.name || '',
+        isGroup: chat.isGroup,
+        groupName: chat.isGroup ? chat.name : '',
+        body: msg.body,
+        type: msg.type
+      };
+      global.inboxMessages.unshift(msgEntry);
+      if (global.inboxMessages.length > 200) global.inboxMessages.pop();
+      console.log(`📩 [${label}] Dari ${msgEntry.from}: ${msgEntry.body.slice(0, 60)}`);
+    } catch {}
+  });
+
+  instance.initialize();
+  console.log(`🔧 Inisialisasi akun [${label}]...`);
+  return entry;
+}
+
+function getReadyClient(accountId) {
+  if (accountId && global.clientsMap[accountId]) {
+    const a = global.clientsMap[accountId];
+    return a.status === 'ready' ? a.instance : null;
+  }
+  const found = Object.values(global.clientsMap).find(a => a.status === 'ready');
+  return found ? found.instance : null;
+}
+
+// ====== ACCOUNTS API ======
+app.get('/accounts', (req, res) => {
+  const list = Object.values(global.clientsMap).map(a => ({
+    id: a.id, label: a.label, status: a.status, phone: a.phone, hasQr: !!a.qr
+  }));
+  res.json({ accounts: list });
 });
 
+app.post('/accounts', (req, res) => {
+  const label = (req.body.label || '').trim();
+  if (!label) return res.status(400).json({ status: 'error', msg: 'Label akun wajib diisi' });
+  const id = 'acc_' + Date.now();
+  createClient(id, label);
+  res.json({ status: 'ok', id, label });
+});
+
+app.delete('/accounts/:id', async (req, res) => {
+  const { id } = req.params;
+  const entry = global.clientsMap[id];
+  if (!entry) return res.status(404).json({ status: 'error', msg: 'Akun tidak ditemukan' });
+  try { await entry.instance.destroy(); } catch {}
+  const sessionPath = path.join(__dirname, `_session_${id}`);
+  if (fs.existsSync(sessionPath)) fs.rmSync(sessionPath, { recursive: true, force: true });
+  delete global.clientsMap[id];
+  saveAccountsList();
+  console.log(`🗑️ Akun [${entry.label}] dihapus`);
+  res.json({ status: 'ok' });
+});
+
+app.get('/accounts/:id/qr', (req, res) => {
+  const entry = global.clientsMap[req.params.id];
+  if (!entry) return res.status(404).json({ status: 'error', msg: 'Akun tidak ditemukan' });
+  if (entry.status === 'ready') return res.json({ status: 'connected', phone: entry.phone });
+  if (entry.qr) return res.json({ status: 'qr', qr: entry.qr });
+  res.json({ status: 'waiting' });
+});
+
+app.post('/accounts/:id/disconnect', async (req, res) => {
+  const entry = global.clientsMap[req.params.id];
+  if (!entry) return res.status(404).json({ status: 'error', msg: 'Akun tidak ditemukan' });
+  try { await entry.instance.logout(); entry.status = 'disconnected'; entry.qr = null; entry.phone = ''; } catch {}
+  res.json({ status: 'ok' });
+});
+
+app.post('/accounts/:id/reconnect', (req, res) => {
+  const entry = global.clientsMap[req.params.id];
+  if (!entry) return res.status(404).json({ status: 'error', msg: 'Akun tidak ditemukan' });
+  entry.status = 'connecting'; entry.qr = null;
+  try { entry.instance.initialize(); } catch {}
+  res.json({ status: 'ok' });
+});
+
+// ====== STATUS (compat) ======
+app.get('/status', (req, res) => {
+  const accounts = Object.values(global.clientsMap);
+  const readyCount = accounts.filter(a => a.status === 'ready').length;
+  res.json({ connected: readyCount > 0, readyCount, totalAccounts: accounts.length });
+});
+
+// ====== MESSAGES ======
 app.get('/messages', (req, res) => {
   const since = parseInt(req.query.since) || 0;
-  const msgs = global.inboxMessages.filter(m => m.ts > since);
+  const accountId = req.query.accountId || null;
+  let msgs = global.inboxMessages.filter(m => m.ts > since);
+  if (accountId) msgs = msgs.filter(m => m.accountId === accountId);
   res.json({ messages: msgs });
 });
 
@@ -51,218 +197,119 @@ app.delete('/messages', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+// ====== QR (compat - akun pertama) ======
 app.get('/qr', (req, res) => {
-  if (global.client) return res.json({ status: 'connected' });
-  if (!global.currentQr) return res.json({ status: 'waiting' });
-  res.json({ status: 'qr', qr: global.currentQr });
+  const accounts = Object.values(global.clientsMap);
+  if (accounts.length === 0) return res.json({ status: 'waiting' });
+  const first = accounts[0];
+  if (first.status === 'ready') return res.json({ status: 'connected' });
+  if (first.qr) return res.json({ status: 'qr', qr: first.qr });
+  res.json({ status: 'waiting' });
 });
 
+// ====== REPLY ======
 app.post('/reply', async (req, res) => {
   try {
-    const { to, pesan } = req.body;
+    const { to, pesan, accountId } = req.body;
     if (!to || !pesan) return res.status(400).json({ status: 'error', msg: 'Parameter tidak lengkap' });
-    if (!global.client) return res.status(503).json({ status: 'error', msg: 'WA client belum siap' });
-    await global.client.sendMessage(`${to}@c.us`, pesan.trim());
-    console.log(`✅ Balas ke ${to}: ${pesan.slice(0, 60)}`);
+    const client = getReadyClient(accountId);
+    if (!client) return res.status(503).json({ status: 'error', msg: 'Tidak ada akun WA yang siap' });
+    await client.sendMessage(`${to}@c.us`, pesan.trim());
     res.json({ status: 'ok' });
   } catch (err) {
-    console.error('❌ Gagal balas:', err.message);
     res.status(500).json({ status: 'error', msg: err.message });
   }
 });
 
+// ====== DISCONNECT (compat) ======
 app.post('/disconnect', async (req, res) => {
-  try {
-    if (global.client) {
-      await waClient.logout();
-      global.client = null;
-      global.currentQr = null;
-    }
-    res.json({ status: 'ok' });
-  } catch (err) {
-    res.json({ status: 'ok' });
+  const { accountId } = req.body || {};
+  if (accountId && global.clientsMap[accountId]) {
+    try { await global.clientsMap[accountId].instance.logout(); global.clientsMap[accountId].status = 'disconnected'; } catch {}
   }
+  res.json({ status: 'ok' });
 });
 
-// DELETE /cache — hapus .wwebjs_cache (browser cache WA)
+// ====== CACHE & HASIL ======
 app.delete('/cache', (req, res) => {
-  const cachePath = path.join(__dirname, '.wwebjs_cache');
   try {
-    if (fs.existsSync(cachePath)) {
-      fs.rmSync(cachePath, { recursive: true, force: true });
-      console.log('🧹 .wwebjs_cache dihapus');
-    }
+    const p = path.join(__dirname, '.wwebjs_cache');
+    if (fs.existsSync(p)) fs.rmSync(p, { recursive: true, force: true });
     res.json({ status: 'ok', msg: 'Cache browser WA berhasil dihapus' });
   } catch (err) {
     res.status(500).json({ status: 'error', msg: err.message });
   }
 });
 
-// DELETE /hasil — hapus semua file output di folder hasil/
 app.delete('/hasil', (req, res) => {
-  const dir = path.join(__dirname, 'hasil');
   try {
-    if (fs.existsSync(dir)) {
-      fs.readdirSync(dir).forEach(f => fs.unlinkSync(path.join(dir, f)));
-    }
-    // hapus juga file root lama
+    const dir = path.join(__dirname, 'hasil');
+    if (fs.existsSync(dir)) fs.readdirSync(dir).forEach(f => fs.unlinkSync(path.join(dir, f)));
     ['hasil.json', 'hasil.xlsx', 'hasil.txt'].forEach(f => {
       const p = path.join(__dirname, f);
       if (fs.existsSync(p)) fs.unlinkSync(p);
     });
-    console.log('🧹 File hasil dihapus');
     res.json({ status: 'ok', msg: 'File output berhasil dihapus' });
   } catch (err) {
     res.status(500).json({ status: 'error', msg: err.message });
   }
 });
 
+// ====== CEK ======
 app.post('/cek', async (req, res) => {
   try {
-    const raw = req.body.nomor;
-    if (!raw) return res.status(400).json({ status: 'error', msg: 'Nomor kosong' });
-
-    // Pisahkan berdasarkan newline, koma, semicolon, atau tab
-    const lines = raw
-      .split(/[\n,;\t]+/)
-      .map(n => normalizeNumber(n))
-      .filter(n => n && isValidIndonesianMobile(n));
-
+    const { nomor, accountId } = req.body;
+    if (!nomor) return res.status(400).json({ status: 'error', msg: 'Nomor kosong' });
+    const lines = nomor.split(/[\n,;\t]+/).map(n => normalizeNumber(n)).filter(n => n && isValidIndonesianMobile(n));
+    if (lines.length === 0) return res.status(400).json({ status: 'error', msg: 'Tidak ada nomor valid' });
+    const client = getReadyClient(accountId);
+    if (!client) return res.status(503).json({ status: 'error', msg: 'Tidak ada akun WA yang siap' });
     fs.writeFileSync('numbers.json', JSON.stringify(lines, null, 2));
-
     console.log(`▶️ Mulai cek ${lines.length} nomor...`);
-    const hasil = await cekNomor(global.client);
-
+    const hasil = await cekNomor(client);
     res.json({ status: 'ok', data: hasil });
   } catch (err) {
-    console.error('❌ Error:', err.message);
     res.status(500).json({ status: 'error', msg: err.message });
   }
 });
 
+// ====== KIRIM ======
 app.post('/kirim', async (req, res) => {
   try {
-    const { nomor, pesan } = req.body;
+    const { nomor, pesan, accountId } = req.body;
     if (!nomor) return res.status(400).json({ status: 'error', msg: 'Nomor kosong' });
     if (!pesan || !pesan.trim()) return res.status(400).json({ status: 'error', msg: 'Pesan kosong' });
-    if (!global.client) return res.status(503).json({ status: 'error', msg: 'WA client belum siap' });
-
-    const lines = nomor
-      .split(/[\n,;\t]+/)
-      .map(n => normalizeNumber(n))
-      .filter(n => n && isValidIndonesianMobile(n));
-
+    const client = getReadyClient(accountId);
+    if (!client) return res.status(503).json({ status: 'error', msg: 'Tidak ada akun WA yang siap' });
+    const lines = nomor.split(/[\n,;\t]+/).map(n => normalizeNumber(n)).filter(n => n && isValidIndonesianMobile(n));
     if (lines.length === 0) return res.status(400).json({ status: 'error', msg: 'Tidak ada nomor valid' });
-
-    console.log(`📤 Kirim pesan ke ${lines.length} nomor...`);
     const results = [];
-
     for (const num of lines) {
       try {
-        await global.client.sendMessage(`${num}@c.us`, pesan.trim());
+        await client.sendMessage(`${num}@c.us`, pesan.trim());
         results.push({ number: num, status: 'Terkirim' });
-        console.log(`✅ Terkirim: ${num}`);
-      } catch (err) {
+      } catch {
         results.push({ number: num, status: 'Gagal' });
-        console.error(`❌ Gagal kirim ke ${num}:`, err.message);
       }
     }
-
     res.json({ status: 'ok', data: results });
   } catch (err) {
-    console.error('❌ Error kirim:', err.message);
     res.status(500).json({ status: 'error', msg: err.message });
   }
 });
 
-const waClient = new Client({
-  authStrategy: new LocalAuth({ dataPath: './_IGNORE_session' }),
-  puppeteer: {
-    executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    headless: true
-  }
+// ====== START ======
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Server running di http://127.0.0.1:${PORT}`);
 });
 
-waClient.on('message', async (msg) => {
-  try {
-    const contact = await msg.getContact();
-    const chat = await msg.getChat();
-    const entry = {
-      ts: Date.now(),
-      id: msg.id._serialized,
-      from: contact.id.user || msg.from.replace(/@c\.us|@g\.us|@lid/g, ''),
-      name: contact.pushname || contact.name || '',
-      isGroup: chat.isGroup,
-      groupName: chat.isGroup ? chat.name : '',
-      body: msg.body,
-      type: msg.type
-    };
-    global.inboxMessages.unshift(entry);
-    if (global.inboxMessages.length > 200) global.inboxMessages.pop();
-    console.log(`📩 Pesan dari ${entry.from}: ${entry.body.slice(0, 60)}`);
-  } catch (e) {}
-});
-
-waClient.on('qr', (qr) => {
-  global.currentQr = qr;
-  console.log('\n📱 QR tersedia di http://localhost:' + PORT + ' — buka halaman Connect WA');
-  qrcode.generate(qr, { small: true });
-});
-
-waClient.on('ready', () => {
-  global.client = waClient;
-  global.currentQr = null;
-  console.log('✅ WA Client siap!');
-});
-
-waClient.on('auth_failure', (msg) => {
-  global.currentQr = null;
-  console.error('❌ Auth gagal:', msg);
-});
-
-waClient.on('disconnected', (reason) => {
-  console.log('⚠️ WA Client disconnected:', reason);
-  global.client = null;
-  global.currentQr = null;
-  waClient.initialize();
-});
-
-app.listen(PORT, () => {
-  console.log(`✅ Server running di http://localhost:${PORT}`);
-});
-
-waClient.initialize();
-
-function cleanup() {
-  // Bersihkan folder hasil
-  if (fs.existsSync(folderPath)) {
-    const files = fs.readdirSync(folderPath);
-    for (const file of files) {
-      const fullPath = path.join(folderPath, file);
-      try {
-        fs.unlinkSync(fullPath);
-        console.log(`🧹 Hapus: ${file}`);
-      } catch (err) {
-        console.error(`❌ Gagal hapus ${file}:`, err.message);
-      }
-    }
-  }
-
-  
-  // Hapus file hasil lain
-  const filesToDelete = ['numbers.json', 'hasil.json', 'hasil.xlsx', 'hasil.txt'];
-  filesToDelete.forEach(file => {
-    const filePath = path.join(__dirname, file);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-      console.log(`🧹 Hapus: ${file}`);
-    }
-  });
-
-  process.exit();
+const savedAccounts = loadAccountsList();
+if (savedAccounts.length > 0) {
+  console.log(`🔄 Memuat ${savedAccounts.length} akun tersimpan...`);
+  savedAccounts.forEach(a => createClient(a.id, a.label));
+} else {
+  console.log('ℹ️  Belum ada akun. Tambah dari menu "Kelola Akun".');
 }
 
-process.on('SIGINT', cleanup);
-process.on('SIGTERM', cleanup);
-process.on('exit', cleanup);
+process.on('SIGINT', () => process.exit());
+process.on('SIGTERM', () => process.exit());
