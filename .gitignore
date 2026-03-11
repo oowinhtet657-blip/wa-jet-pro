@@ -1,0 +1,10 @@
+node_modules/
+_IGNORE_session/
+_IGNORE_cek-wa/
+.wwebjs_cache/
+.wwebjs_auth/
+session.data.json
+cek-wa.data.json
+hasil/
+*.pma
+.env

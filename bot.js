@@ -7,8 +7,8 @@ async function cekNomor(client) {
 
   for (const num of numbers) {
     try {
-      const result = await client.checkNumberStatus(num);
-      const status = result && result.canReceiveMessage ? "Terdaftar WA" : "Tidak Terdaftar WA";
+      const result = await client.isRegisteredUser(`${num}@c.us`);
+      const status = result ? "Terdaftar WA" : "Tidak Terdaftar WA";
       results.push({ number: num, status });
       console.log(`${num}: ${status}`);
     } catch (err) {

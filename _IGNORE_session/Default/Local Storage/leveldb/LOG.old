@@ -1,6 +1,0 @@
-2025/07/25-06:39:06.915 4bb0 Reusing MANIFEST C:\xampp\htdocs\check-wa\_IGNORE_session\Default\Local Storage\leveldb/MANIFEST-000001
-2025/07/25-06:39:06.920 4bb0 Recovering log #16
-2025/07/25-06:39:06.924 4bb0 Reusing old log C:\xampp\htdocs\check-wa\_IGNORE_session\Default\Local Storage\leveldb/000016.log 
-2025/07/25-06:41:07.570 3d34 Level-0 table #21: started
-2025/07/25-06:41:07.584 3d34 Level-0 table #21: 20569 bytes OK
-2025/07/25-06:41:07.585 3d34 Delete type=0 #16

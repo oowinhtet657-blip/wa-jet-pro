@@ -1,204 +1,928 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <title>Check Nomor WhatsApp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WA Tools — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    * {
-      box-sizing: border-box;
+    :root {
+      --bg: #050d1a;
+      --sidebar-bg: #060e1c;
+      --card-bg: #091527;
+      --card-border: #0e2444;
+      --accent: #00d4ff;
+      --accent2: #7c5cbf;
+      --accent-glow: rgba(0,212,255,0.12);
+      --success: #00e676;
+      --danger: #ff4444;
+      --warning: #ffa726;
+      --text: #c8daf0;
+      --text-dim: #4a6a8a;
+      --text-bright: #e8f4ff;
+      --radius: 10px;
+      --radius-sm: 6px;
     }
- 
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 2rem;
-      background: #121212;
-      color: #e0e0e0;
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); height:100vh; display:flex; overflow:hidden; }
+
+    .sidebar { width:220px; min-width:220px; background:var(--sidebar-bg); border-right:1px solid var(--card-border); display:flex; flex-direction:column; z-index:10; }
+    .sidebar-logo { padding:1.125rem 1rem 0.875rem; border-bottom:1px solid var(--card-border); }
+    .logo-icon { display:flex; align-items:center; gap:0.625rem; }
+    .logo-icon svg { width:26px; height:26px; fill:var(--accent); filter:drop-shadow(0 0 6px var(--accent)); }
+    .logo-text { font-family:'Orbitron',sans-serif; font-size:0.8125rem; font-weight:700; color:var(--accent); letter-spacing:0.05em; text-shadow:0 0 10px var(--accent); }
+    .logo-sub { font-size:0.625rem; color:var(--text-dim); margin-top:2px; }
+    .sidebar-section { padding:0.875rem 1rem 0.25rem; font-size:0.5625rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.12em; }
+    .nav-item { display:flex; align-items:center; gap:0.625rem; padding:0.5625rem 0.875rem; margin:0.125rem 0.5rem; border-radius:var(--radius-sm); font-size:0.8rem; font-weight:500; color:var(--text-dim); text-decoration:none; cursor:pointer; transition:all 0.2s; border:1px solid transparent; }
+    .nav-item svg { width:15px; height:15px; fill:currentColor; flex-shrink:0; }
+    .nav-item:hover { background:var(--accent-glow); color:var(--accent); border-color:rgba(0,212,255,0.15); }
+    .nav-item.active { background:var(--accent-glow); color:var(--accent); border-color:rgba(0,212,255,0.25); text-shadow:0 0 8px rgba(0,212,255,0.4); }
+    .nav-item.active svg { filter:drop-shadow(0 0 4px var(--accent)); }
+    .sidebar-bottom { margin-top:auto; padding:0.875rem 1rem; border-top:1px solid var(--card-border); }
+    .status-indicator { display:flex; align-items:center; gap:0.5rem; font-size:0.6875rem; font-weight:500; }
+    .status-dot { width:7px; height:7px; border-radius:50%; background:var(--danger); box-shadow:0 0 6px var(--danger); flex-shrink:0; }
+    .status-dot.online { background:var(--success); box-shadow:0 0 6px var(--success); animation:blink 2s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; padding:0.75rem 1.5rem; border-bottom:1px solid var(--card-border); background:var(--sidebar-bg); gap:1rem; }
+    .topbar-title { font-family:'Orbitron',sans-serif; font-size:1rem; font-weight:700; color:var(--accent); text-shadow:0 0 12px var(--accent); letter-spacing:0.05em; white-space:nowrap; }
+    .topbar-right { display:flex; align-items:center; gap:0.875rem; flex-shrink:0; }
+    .topbar-time { font-size:0.6875rem; color:var(--text-dim); font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .wa-badge { display:inline-flex; align-items:center; gap:0.375rem; padding:0.25rem 0.625rem; border-radius:999px; font-size:0.6875rem; font-weight:600; background:rgba(255,167,38,0.1); color:var(--warning); border:1px solid rgba(255,167,38,0.2); white-space:nowrap; }
+    .wa-badge.connected { background:rgba(0,230,118,0.1); color:var(--success); border-color:rgba(0,230,118,0.2); }
+    .content { flex:1; overflow-y:auto; padding:1.25rem; }
+    .page { display:none; }
+    .page.active { display:block; }
+    .card { background:var(--card-bg); border:1px solid var(--card-border); border-radius:var(--radius); padding:1.25rem; margin-bottom:1rem; }
+    .card-title { display:flex; align-items:center; gap:0.5rem; font-size:0.75rem; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:1rem; }
+    .card-title svg { width:15px; height:15px; fill:var(--accent); }
+    .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1rem; }
+    .stat-card { background:var(--card-bg); border:1px solid var(--card-border); border-radius:var(--radius); padding:1.125rem; position:relative; overflow:hidden; }
+    .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+    .stat-card.cyan::before { background:var(--accent); box-shadow:0 0 8px var(--accent); }
+    .stat-card.green::before { background:var(--success); box-shadow:0 0 8px var(--success); }
+    .stat-card.red::before { background:var(--danger); box-shadow:0 0 8px var(--danger); }
+    .stat-card.purple::before { background:var(--accent2); box-shadow:0 0 8px var(--accent2); }
+    .stat-label { font-size:0.625rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.4rem; }
+    .stat-value { font-family:'Orbitron',sans-serif; font-size:1.625rem; font-weight:700; line-height:1; margin-bottom:0.25rem; }
+    .stat-card.cyan .stat-value { color:var(--accent); text-shadow:0 0 10px rgba(0,212,255,0.4); }
+    .stat-card.green .stat-value { color:var(--success); text-shadow:0 0 10px rgba(0,230,118,0.4); }
+    .stat-card.red .stat-value { color:var(--danger); text-shadow:0 0 10px rgba(255,68,68,0.4); }
+    .stat-card.purple .stat-value { color:var(--accent2); text-shadow:0 0 10px rgba(124,92,191,0.4); }
+    .stat-sub { font-size:0.625rem; color:var(--text-dim); }
+    .dash-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    .table-wrap { border:1px solid var(--card-border); border-radius:var(--radius-sm); overflow:hidden; }
+    table { width:100%; border-collapse:collapse; }
+    thead th { padding:0.5rem 0.875rem; background:rgba(0,212,255,0.04); font-size:0.625rem; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:0.08em; text-align:left; border-bottom:1px solid var(--card-border); }
+    tbody td { padding:0.5rem 0.875rem; font-size:0.8125rem; border-bottom:1px solid var(--card-border); color:var(--text); font-variant-numeric:tabular-nums; }
+    tbody tr:last-child td { border-bottom:none; }
+    tbody tr:hover { background:rgba(0,212,255,0.025); }
+    .badge { display:inline-flex; align-items:center; gap:0.3rem; padding:0.2rem 0.5rem; border-radius:999px; font-size:0.6875rem; font-weight:700; }
+    .badge-dot { width:5px; height:5px; border-radius:50%; background:currentColor; }
+    .badge.terdaftar { background:rgba(0,230,118,0.1); color:var(--success); border:1px solid rgba(0,230,118,0.2); }
+    .badge.tidak-terdaftar { background:rgba(255,68,68,0.1); color:var(--danger); border:1px solid rgba(255,68,68,0.2); }
+    .badge.terkirim { background:rgba(0,212,255,0.1); color:var(--accent); border:1px solid rgba(0,212,255,0.2); }
+    .badge.gagal, .badge.error { background:rgba(255,68,68,0.1); color:var(--danger); border:1px solid rgba(255,68,68,0.2); }
+    .form-group { margin-bottom:1rem; }
+    .form-label { display:block; font-size:0.625rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.375rem; }
+    textarea { width:100%; padding:0.75rem 0.875rem; background:rgba(0,0,0,0.35); border:1px solid var(--card-border); border-radius:var(--radius-sm); color:var(--text-bright); font-family:'Inter',sans-serif; font-size:0.875rem; line-height:1.6; resize:vertical; transition:border-color 0.2s,box-shadow 0.2s; }
+    textarea:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 2px rgba(0,212,255,0.1); }
+    textarea::placeholder { color:var(--text-dim); }
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:0.4rem; padding:0.5625rem 1.125rem; border:none; border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:0.8rem; font-weight:600; cursor:pointer; transition:all 0.2s; }
+    .btn svg { width:14px; height:14px; fill:currentColor; flex-shrink:0; }
+    .btn-primary { background:var(--accent); color:#000; box-shadow:0 0 12px rgba(0,212,255,0.25); }
+    .btn-primary:hover { background:#00eaff; box-shadow:0 0 18px rgba(0,212,255,0.45); }
+    .btn-primary:disabled { opacity:0.4; cursor:not-allowed; box-shadow:none; }
+    .btn-ghost { background:rgba(255,255,255,0.04); color:var(--text); border:1px solid var(--card-border); }
+    .btn-ghost:hover { background:rgba(255,255,255,0.07); border-color:var(--text-dim); }
+    .btn-full { width:100%; margin-top:0.75rem; }
+    .spinner { display:none; width:14px; height:14px; border:2px solid rgba(0,0,0,0.2); border-top-color:#000; border-radius:50%; animation:spin 0.6s linear infinite; flex-shrink:0; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    
+    .results-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem; }
+    .results-title { font-size:0.6875rem; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:0.06em; }
+    .mini-stats { display:flex; gap:0.875rem; font-size:0.6875rem; font-weight:600; flex-wrap:wrap; }
+    .copy-actions { display:flex; gap:0.5rem; margin-top:0.875rem; justify-content:flex-end; flex-wrap:wrap; }
+    .three-col { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; }
+    .col-label { font-size:0.625rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.375rem; }
+    .btn-row { display:flex; align-items:center; justify-content:space-between; margin-top:0.875rem; flex-wrap:wrap; gap:0.5rem; }
+    .btn-group { display:flex; gap:0.5rem; flex-wrap:wrap; }
+    .processing-row td { text-align:center; padding:2rem; color:var(--text-dim); }
+    .process-content { display:flex; align-items:center; justify-content:center; gap:0.625rem; }
+    .empty-state { text-align:center; padding:1.75rem; color:var(--text-dim); font-size:0.8rem; }
+    .toast { position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%) translateY(80px); background:var(--card-bg); border:1px solid var(--accent); color:var(--accent); padding:0.5rem 1.25rem; border-radius:var(--radius-sm); font-size:0.8rem; font-weight:600; box-shadow:0 0 20px rgba(0,212,255,0.2); opacity:0; transition:transform 0.3s,opacity 0.3s; z-index:999; pointer-events:none; }
+    .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+    ::-webkit-scrollbar { width:4px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--card-border); border-radius:2px; }
+    @media (max-width:900px) {
+      .stats-row { grid-template-columns:1fr 1fr; }
+      .dash-grid { grid-template-columns:1fr; }
     }
- 
-    h1 {
-      color: #00c853;
-      margin-bottom: 1.5rem;
-      text-align: center;
-    }
-    h2 {
-      color: #00c853;
-      margin-bottom: 1.5rem;
-      text-align: left;
-    }
-    /* Menu Link */
-    .menu-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-bottom: 2rem;
-      justify-content: center;
-    }
- 
-    .menu-container button {
-      background-color: #263238;
-      color: #ffffff;
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
- 
-    .menu-container button:hover {
-      background-color: #456e8c;
-    }
- 
-    label {
-      display: block;
-      font-weight: 600;
-      color: #fdd835;
-      margin-bottom: 0.5rem;
-    }
- 
-    textarea {
-      width: 100%;
-      height: 150px;
-      padding: 1rem;
-      border: 1px solid #444;
-      background: #1e1e1e;
-      color: #fff;
-      border-radius: 5px;
-      resize: vertical;
-      font-size: 1rem;
-    }
- 
-    button[type="submit"] {
-      margin-top: 1rem;
-      padding: 0.75rem;
-      width: 100%;
-      background-color: #00c853;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
- 
-    button[type="submit"]:hover {
-      background-color: #00b246;
-    }
- 
-    #hasil {
-      margin-top: 2rem;
-      background: #1e1e1e;
-      padding: 1.5rem;
-      border-radius: 8px;
-      border: 1px solid #333;
-    }
- 
-    h3 {
-      color: #80d8ff;
-      margin-bottom: 1rem;
-    }
- 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
- 
-    th, td {
-      padding: 0.75rem;
-      border-bottom: 1px solid #333;
-      text-align: left;
-    }
- 
-    th {
-      background-color: #263238;
-      color: #ffffff;
-    }
- 
-    .terdaftar {
-      color: #00e676;
-      font-weight: bold;
-    }
- 
-    .tidak-terdaftar {
-      color: #ff1744;
-      font-weight: bold;
+    @media (max-width:640px) {
+      .sidebar { width:52px; min-width:52px; }
+      .sidebar-logo .logo-text, .sidebar-logo .logo-sub, .nav-item span, .sidebar-section, .sidebar-bottom .status-label { display:none; }
+      .nav-item { padding:0.625rem; justify-content:center; }
+      .three-col { grid-template-columns:1fr; }
     }
   </style>
 </head>
 <body>
-  <h1>Follow up lawas Group</h1>
- 
-  <!-- Menu Pilihan -->
-  <div class="menu-container">
-    <button onclick="window.open('https://kurokuro.great-site.net/lawas.html', '_blank')">Lawastoto</button>
-    <button onclick="window.open('https://kurokuro.great-site.net/siul.html', '_blank')">Siul</button>
-    <button onclick="window.open('https://kurokuro.great-site.net/medali.html', '_blank')">Medali</button>
-    <button onclick="window.open('https://kurokuro.great-site.net/mmpir.html', '_blank')">Mampir</button>
-    <button onclick="window.open('https://kurokuro.great-site.net/panah.html', '_blank')">Panah</button>
-    <button onclick="window.open('https://kurokuro.great-site.net/arus.html', '_blank')">Arus</button>
-    <button onclick="window.open('https://kurokuro.great-site.net/waras.html', '_blank')">Waras</button>
-    <button onclick="window.open('https://kurokuro.great-site.net/jubir.html', '_blank')">Jubir</button>
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        <div>
+          <div class="logo-text">WA JET-PRO</div>
+          <div class="logo-sub">Dashboard v2.0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section"><span>Menu Utama</span></div>
+
+    <a class="nav-item" data-page="connect">
+      <svg viewBox="0 0 24 24"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>
+      <span>Connect WA</span>
+    </a>
+    <a class="nav-item active" data-page="dashboard">
+      <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+      <span>Dashboard</span>
+    </a>
+    <a class="nav-item" data-page="rapih">
+      <svg viewBox="0 0 24 24"><path d="M3 18h6v-2H3v2zM3 6v2h18V6H3zm0 7h12v-2H3v2z"/></svg>
+      <span>Rapihkan Nomor</span>
+    </a>
+    <a class="nav-item" data-page="cek">
+      <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+      <span>Cek WA</span>
+    </a>
+    <a class="nav-item" data-page="kirim">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      <span>Kirim Pesan</span>
+    </a>
+    <a class="nav-item" data-page="pesan" id="navPesan">
+      <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+      <span>Pesan Masuk</span>
+      <span id="inboxBadge" style="display:none;margin-left:auto;background:var(--danger);color:#fff;font-size:0.55rem;font-weight:700;padding:1px 5px;border-radius:999px;min-width:16px;text-align:center;"></span>
+    </a>
+
+    <div class="sidebar-bottom">
+      <div class="status-indicator">
+        <div class="status-dot" id="sidebarDot"></div>
+        <span class="status-label" id="sidebarStatus">Disconnected</span>
+      </div>
+    </div>
+  </aside>
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbarTitle">Dashboard</div>
+      <div class="topbar-right">
+        <div class="wa-badge" id="waBadge">⚡ Menunggu WA...</div>
+        <div class="topbar-time" id="topbarTime"></div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page active" id="page-dashboard">
+        <div class="stats-row">
+          <div class="stat-card cyan">
+            <div class="stat-label">Total Cek Nomor</div>
+            <div class="stat-value" id="statTotalCek">0</div>
+            <div class="stat-sub">Sepanjang sesi</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-label">Terdaftar WA</div>
+            <div class="stat-value" id="statTerdaftar">0</div>
+            <div class="stat-sub">Nomor aktif WA</div>
+          </div>
+          <div class="stat-card red">
+            <div class="stat-label">Tidak Terdaftar</div>
+            <div class="stat-value" id="statTidak">0</div>
+            <div class="stat-sub">Bukan pengguna WA</div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-label">Pesan Terkirim</div>
+            <div class="stat-value" id="statKirim">0</div>
+            <div class="stat-sub">Total pesan dikirim</div>
+          </div>
+        </div>
+
+        <div class="dash-grid">
+          <div class="card">
+            <div class="card-title">
+              <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+              Riwayat Cek WA
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Waktu</th><th>Jumlah</th><th>Terdaftar</th><th>Tidak</th></tr></thead>
+                <tbody id="histCekBody"><tr><td colspan="4" class="empty-state">Belum ada riwayat</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">
+              <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+              Riwayat Kirim Pesan
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Waktu</th><th>Jumlah</th><th>Terkirim</th><th>Gagal</th></tr></thead>
+                <tbody id="histKirimBody"><tr><td colspan="4" class="empty-state">Belum ada riwayat</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+            Hasil Terakhir
+          </div>
+          <div class="empty-state" id="lastResultEmpty">Jalankan Cek WA atau Kirim Pesan untuk melihat hasil di sini</div>
+          <div id="lastResultTable" style="display:none;">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>#</th><th>Nomor</th><th>Status</th><th>Tipe</th></tr></thead>
+                <tbody id="lastResultBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="page" id="page-rapih">
+        <div class="card">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24"><path d="M3 18h6v-2H3v2zM3 6v2h18V6H3zm0 7h12v-2H3v2z"/></svg>
+            Rapihkan Nomor HP
+          </div>
+          <div class="three-col">
+            <div>
+              <div class="col-label">Input (Nomor Berantakan)</div>
+              <textarea id="rapihInput" style="height:220px;" placeholder="+62 812-6066-1234&#10;0813-4959-4634&#10;62 821 6097 8899&#10;08123456789, 081298765432"></textarea>
+            </div>
+            <div>
+              <div class="col-label">Output Format 62</div>
+              <textarea id="rapihOutput" style="height:220px;" readonly placeholder="Format 62... akan muncul di sini..."></textarea>
+            </div>
+            <div>
+              <div class="col-label">Output Format 08</div>
+              <textarea id="rapihOutput08" style="height:220px;" readonly placeholder="Format 08... akan muncul di sini..."></textarea>
+            </div>
+          </div>
+          <div class="btn-row">
+            <div class="mini-stats" id="rapihStats"></div>
+            <div class="btn-group">
+              <button class="btn btn-ghost" id="rapihCopyBtn">
+                <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                Copy 62
+              </button>
+              <button class="btn btn-ghost" id="rapihCopy08Btn">
+                <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                Copy 08
+              </button>
+              <button class="btn btn-ghost" id="rapihPasteBtn">
+                <svg viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm-2 14l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+                Pakai untuk Cek
+              </button>
+              <button class="btn btn-primary" id="rapihkanBtn">
+                <svg viewBox="0 0 24 24"><path d="M9 3L5 6.99h3V14h2V6.99h3L9 3zm7 14.01V10h-2v7.01h-3L15 21l4-3.99h-3z"/></svg>
+                Rapihkan
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="page" id="page-cek">
+        <div class="card">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            Cek Nomor WhatsApp
+          </div>
+          <div class="form-group">
+            <div class="form-label">Daftar Nomor (pisah baris / koma)</div>
+            <textarea id="nomor" style="height:160px;" placeholder="6281234567890&#10;6289876543210&#10;62812xxxxxxx"></textarea>
+          </div>
+          <button type="button" class="btn btn-primary btn-full" id="submitBtn">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <span>Mulai Cek</span>
+            <div class="spinner" id="spinner"></div>
+          </button>
+        </div>
+        <div class="card" id="cekHasil" style="display:none;">
+          <div class="results-header">
+            <div class="results-title">Hasil Pengecekan</div>
+            <div class="mini-stats" id="cekStats"></div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>#</th><th>Nomor</th><th>Status</th></tr></thead>
+              <tbody id="hasilBody"></tbody>
+            </table>
+          </div>
+          <div class="copy-actions">
+            <button class="btn btn-ghost" id="copyButton">
+              <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+              Copy Semua
+            </button>
+            <button class="btn btn-ghost" id="copyTerdaftarBtn" style="color:var(--success);">
+              <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+              Copy Terdaftar
+            </button>
+            <button class="btn btn-ghost" id="copyTidakBtn" style="color:var(--danger);">
+              <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+              Copy Tidak Terdaftar
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="page" id="page-kirim">
+        <div class="card">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            Kirim Pesan WhatsApp
+          </div>
+          <div class="form-group">
+            <div class="form-label">Nomor Tujuan (pisah baris / koma)</div>
+            <textarea id="kirimNomor" style="height:120px;" placeholder="6281234567890&#10;6289876543210"></textarea>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Pesan</div>
+            <textarea id="kirimPesan" style="height:140px;" placeholder="Tulis pesan yang ingin dikirim..."></textarea>
+          </div>
+          <button type="button" class="btn btn-primary btn-full" id="kirimBtn">
+            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            <span>Kirim Pesan</span>
+            <div class="spinner" id="kirimSpinner"></div>
+          </button>
+        </div>
+        <div class="card" id="kirimHasilCard" style="display:none;">
+          <div class="results-header">
+            <div class="results-title">Hasil Pengiriman</div>
+            <div class="mini-stats" id="kirimStats"></div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>#</th><th>Nomor</th><th>Status</th></tr></thead>
+              <tbody id="kirimBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====== CONNECT WA ====== -->
+      <div class="page" id="page-connect">
+        <div class="card" style="max-width:480px;margin:0 auto;">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            Connect WhatsApp
+          </div>
+
+          <!-- Connected state -->
+          <div id="connectStateOnline" style="display:none;text-align:center;padding:2rem 1rem;">
+            <div style="width:72px;height:72px;background:rgba(0,230,118,0.1);border:2px solid var(--success);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;">
+              <svg viewBox="0 0 24 24" style="width:36px;height:36px;fill:var(--success);"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+            </div>
+            <div style="font-family:'Orbitron',sans-serif;font-size:0.9rem;color:var(--success);font-weight:700;margin-bottom:0.375rem;">WhatsApp Terhubung</div>
+            <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:1.5rem;">Semua fitur siap digunakan</div>
+            <button class="btn btn-ghost" id="disconnectBtn" style="color:var(--danger);border-color:rgba(255,68,68,0.3);">
+              <svg viewBox="0 0 24 24"><path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/></svg>
+              Putuskan Koneksi
+            </button>
+          </div>
+
+          <!-- QR state -->
+          <div id="connectStateQr" style="display:none;text-align:center;padding:1rem 0;">
+            <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:1rem;">Scan QR ini dengan WhatsApp di HP kamu<br><span style="color:var(--accent);font-size:0.6875rem;">Menu: Perangkat Tertaut → Tautkan Perangkat</span></div>
+            <div style="display:inline-block;background:#fff;padding:16px;border-radius:12px;border:2px solid var(--accent);box-shadow:0 0 24px rgba(0,212,255,0.2);">
+              <canvas id="qrCanvas"></canvas>
+            </div>
+            <div style="margin-top:1rem;font-size:0.6875rem;color:var(--text-dim);">QR otomatis refresh setiap 30 detik</div>
+            <div style="margin-top:0.75rem;">
+              <button class="btn btn-ghost" id="refreshQrBtn" style="font-size:0.75rem;">
+                <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                Refresh QR
+              </button>
+            </div>
+          </div>
+
+          <!-- Waiting state -->
+          <div id="connectStateWaiting" style="text-align:center;padding:2rem 1rem;">
+            <div style="display:inline-block;width:32px;height:32px;border:3px solid rgba(0,212,255,0.15);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:1rem;"></div>
+            <div style="font-size:0.8125rem;color:var(--text-dim);margin-bottom:0.375rem;">Menunggu QR dari server...</div>
+            <div style="font-size:0.6875rem;color:var(--text-dim);">Pastikan <code style="background:rgba(0,212,255,0.1);color:var(--accent);padding:1px 5px;border-radius:3px;">node server.js</code> sudah berjalan</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====== PESAN MASUK ====== -->
+      <div class="page" id="page-pesan">
+        <div class="card">
+          <div class="card-title" style="justify-content:space-between;">
+            <span style="display:flex;align-items:center;gap:0.5rem;">
+              <svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:var(--accent);"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+              Pesan Masuk
+            </span>
+            <div style="display:flex;gap:0.5rem;">
+              <button class="btn btn-ghost" id="refreshInboxBtn" style="font-size:0.7rem;padding:0.3rem 0.7rem;">
+                <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                Refresh
+              </button>
+              <button class="btn btn-ghost" id="clearInboxBtn" style="font-size:0.7rem;padding:0.3rem 0.7rem;color:var(--danger);border-color:rgba(255,68,68,0.2);">
+                <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                Hapus Semua
+              </button>
+            </div>
+          </div>
+          <div id="inboxEmpty" style="text-align:center;padding:2.5rem 1rem;color:var(--text-dim);font-size:0.8rem;">Belum ada pesan masuk</div>
+          <div class="table-wrap" id="inboxTableWrap" style="display:none;">
+            <table>
+              <thead><tr><th style="width:130px;">Waktu</th><th>Dari</th><th>Pesan</th><th style="width:70px;"></th></tr></thead>
+              <tbody id="inboxBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
- 
-  <h2>Check Nomor WhatsApp</h2>
-  <form id="form">
-    <label for="nomor">Masukkan daftar nomor:</label>
-    <textarea id="nomor" placeholder="Format nomor: 62812345..."></textarea>
-    <button type="submit">Mulai Cek</button>
-  </form>
- 
-  <div id="hasil">
-    <h3>✅ Hasil:</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Nomor</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="hasilBody">
-        <!-- Baris hasil akan dimasukkan di sini -->
-      </tbody>
-    </table>
+
+  <!-- MODAL BALAS -->
+  <div id="replyModal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);align-items:center;justify-content:center;" onclick="if(event.target===this)closeReplyModal()">
+    <div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius);padding:1.5rem;width:100%;max-width:440px;margin:1rem;box-shadow:0 0 40px rgba(0,212,255,0.1);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+        <div style="font-family:'Orbitron',sans-serif;font-size:0.75rem;font-weight:700;color:var(--accent);">BALAS PESAN</div>
+        <button onclick="closeReplyModal()" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1.2rem;line-height:1;">&times;</button>
+      </div>
+      <div id="replyTo" style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.5rem;"></div>
+      <div id="replyQuote" style="font-size:0.8rem;background:rgba(0,212,255,0.06);border-left:3px solid var(--accent);padding:0.5rem 0.75rem;border-radius:0 4px 4px 0;color:var(--text-dim);margin-bottom:1rem;white-space:pre-wrap;word-break:break-word;max-height:80px;overflow-y:auto;"></div>
+      <textarea id="replyText" style="width:100%;height:100px;padding:0.75rem;background:rgba(0,0,0,0.35);border:1px solid var(--card-border);border-radius:var(--radius-sm);color:var(--text-bright);font-family:'Inter',sans-serif;font-size:0.875rem;resize:vertical;" placeholder="Tulis balasan..."></textarea>
+      <div style="display:flex;gap:0.5rem;margin-top:0.875rem;justify-content:flex-end;">
+        <button class="btn btn-ghost" onclick="closeReplyModal()">Batal</button>
+        <button class="btn btn-primary" id="sendReplyBtn">
+          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          <span>Kirim Balasan</span>
+          <div class="spinner" id="replySpinner"></div>
+        </button>
+      </div>
+    </div>
   </div>
- 
+
+  <div class="toast" id="toast"></div>
+
   <script>
-    const form = document.getElementById('form');
-    const hasilBody = document.getElementById('hasilBody');
- 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      hasilBody.innerHTML = '<tr><td colspan="2">⏳ Memproses...</td></tr>';
- 
-      const nomor = document.getElementById('nomor').value;
-      const res = await fetch('/cek', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nomor })
+    function normalizeNumber(raw) {
+      let num = raw.replace(/[^0-9]/g, '');
+      if (!num) return null;
+      if (num.startsWith('0')) num = '62' + num.slice(1);
+      else if (num.startsWith('8') && num.length >= 10 && num.length <= 13) num = '62' + num;
+      return num;
+    }
+    function isValidIndonesianMobile(num) { return /^628[0-9]{8,11}$/.test(num); }
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      if (!t) return;
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+    function fmtTime(ts) { return new Date(ts).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', second:'2-digit' }); }
+
+    function updateClock() {
+      document.getElementById('topbarTime').textContent = new Date().toLocaleString('id-ID', {
+        weekday:'short', day:'2-digit', month:'short', year:'numeric',
+        hour:'2-digit', minute:'2-digit', second:'2-digit'
       });
- 
-      const data = await res.json();
- 
-      if (data.status === 'ok') {
-        hasilBody.innerHTML = '';
-        data.data.forEach(item => {
-          const tr = document.createElement('tr');
- 
-          const tdNomor = document.createElement('td');
-          tdNomor.textContent = item.number;
- 
-          const tdStatus = document.createElement('td');
-          tdStatus.textContent = item.status;
-          tdStatus.className = item.status.includes('Tidak') ? 'tidak-terdaftar' : 'terdaftar';
- 
-          tr.appendChild(tdNomor);
-          tr.appendChild(tdStatus);
-          hasilBody.appendChild(tr);
-        });
-      } else {
-        hasilBody.innerHTML = '<tr><td colspan="2">❌ Gagal memproses.</td></tr>';
+    }
+    updateClock(); setInterval(updateClock, 1000);
+
+    async function checkWaStatus() {
+      try {
+        const res = await fetch('/status');
+        const data = await res.json();
+        const dot = document.getElementById('sidebarDot');
+        const lbl = document.getElementById('sidebarStatus');
+        const badge = document.getElementById('waBadge');
+        if (data.connected) {
+          dot.classList.add('online'); lbl.textContent = 'Connected';
+          badge.className = 'wa-badge connected'; badge.textContent = '✓ WA Terhubung';
+        } else {
+          dot.classList.remove('online'); lbl.textContent = 'Disconnected';
+          badge.className = 'wa-badge'; badge.textContent = '⚡ Menunggu WA...';
+        }
+      } catch {}
+    }
+    checkWaStatus(); setInterval(checkWaStatus, 5000);
+
+    // ===== QR CODE =====
+    let qrInterval = null;
+
+    async function loadQr() {
+      try {
+        const res = await fetch('/qr');
+        const data = await res.json();
+        const stateOnline = document.getElementById('connectStateOnline');
+        const stateQr = document.getElementById('connectStateQr');
+        const stateWaiting = document.getElementById('connectStateWaiting');
+
+        if (data.status === 'connected') {
+          stateOnline.style.display = 'block';
+          stateQr.style.display = 'none';
+          stateWaiting.style.display = 'none';
+          if (qrInterval) { clearInterval(qrInterval); qrInterval = null; }
+        } else if (data.status === 'qr' && data.qr) {
+          stateOnline.style.display = 'none';
+          stateWaiting.style.display = 'none';
+          stateQr.style.display = 'block';
+          renderQr(data.qr);
+        } else {
+          stateOnline.style.display = 'none';
+          stateQr.style.display = 'none';
+          stateWaiting.style.display = 'block';
+        }
+      } catch {}
+    }
+
+    function renderQr(qrString) {
+      if (typeof QRCode === 'undefined') return;
+      const canvas = document.getElementById('qrCanvas');
+      QRCode.toCanvas(canvas, qrString, { width: 240, margin: 0, color: { dark: '#000000', light: '#ffffff' } });
+    }
+
+    document.getElementById('refreshQrBtn').addEventListener('click', loadQr);
+
+    document.getElementById('disconnectBtn').addEventListener('click', async () => {
+      try {
+        await fetch('/disconnect', { method: 'POST' });
+        showToast('Koneksi WA diputus');
+        loadQr();
+      } catch { showToast('Gagal memutus koneksi'); }
+    });
+
+    // ===== INBOX =====
+    let inboxInterval = null;
+    let inboxLastTs = 0;
+    let inboxUnread = 0;
+    let inboxAll = [];
+
+    function fmtMsg(ts) {
+      const d = new Date(ts);
+      return d.toLocaleDateString('id-ID', { day:'2-digit', month:'short' }) + ' ' +
+             d.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    }
+
+    function renderInbox() {
+      const body = document.getElementById('inboxBody');
+      const empty = document.getElementById('inboxEmpty');
+      const wrap = document.getElementById('inboxTableWrap');
+      if (!body) return;
+      if (inboxAll.length === 0) {
+        empty.style.display = 'block'; wrap.style.display = 'none'; return;
       }
+      empty.style.display = 'none'; wrap.style.display = 'block';
+      body.innerHTML = inboxAll.map((m, i) => {
+        const from = m.name
+          ? `<span style="color:var(--text-bright);font-weight:600;">${m.name}</span><br><span style="font-size:0.7rem;color:var(--accent);">+${m.from}</span>`
+          : `<span style="color:var(--accent);font-weight:600;">+${m.from}</span>`;
+        const groupTag = m.isGroup ? `<span style="display:inline-block;font-size:0.6rem;background:rgba(124,92,191,0.15);color:var(--accent2);border:1px solid rgba(124,92,191,0.25);border-radius:3px;padding:0 4px;margin-right:4px;">${m.groupName}</span>` : '';
+        const bodyText = m.type !== 'chat' ? `<em style="color:var(--text-dim);">[${m.type}]</em>` : m.body.replace(/</g,'&lt;');
+        return `<tr>
+          <td style="font-size:0.7rem;color:var(--text-dim);white-space:nowrap;">${fmtMsg(m.ts)}</td>
+          <td style="min-width:120px;">${from}</td>
+          <td style="font-size:0.8125rem;word-break:break-word;">${groupTag}${bodyText}</td>
+          <td><button class="btn btn-ghost reply-btn" data-idx="${i}" style="font-size:0.65rem;padding:0.25rem 0.5rem;white-space:nowrap;">&#8617; Balas</button></td>
+        </tr>`;
+      }).join('');
+
+      body.querySelectorAll('.reply-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const m = inboxAll[parseInt(btn.dataset.idx)];
+          if (m) openReplyModal(m.from, m.name || '', m.body);
+        });
+      });
+    }
+
+    async function pollInbox() {
+      try {
+        const res = await fetch('/messages?since=' + inboxLastTs);
+        const data = await res.json();
+        if (data.messages && data.messages.length > 0) {
+          inboxAll = [...data.messages, ...inboxAll].slice(0, 200);
+          // keep unique by id
+          const seen = new Set(); inboxAll = inboxAll.filter(m => { if(seen.has(m.id)){return false;} seen.add(m.id); return true; });
+          inboxLastTs = inboxAll[0].ts;
+          const activePage = document.querySelector('.page.active');
+          if (!activePage || activePage.id !== 'page-pesan') {
+            inboxUnread += data.messages.length;
+            const badge = document.getElementById('inboxBadge');
+            if (badge) { badge.style.display = 'inline-block'; badge.textContent = inboxUnread > 99 ? '99+' : inboxUnread; }
+          } else {
+            renderInbox();
+          }
+        }
+      } catch {}
+    }
+
+    setInterval(pollInbox, 3000);
+
+    // ===== REPLY MODAL =====
+    let replyTarget = null;
+
+    function openReplyModal(from, name, quote) {
+      replyTarget = from;
+      document.getElementById('replyTo').innerHTML = `Membalas ke: <span style="color:var(--accent);font-weight:600;">+${from}</span>${name ? ` <span style="color:var(--text-dim)">(${name})</span>` : ''}`;
+      document.getElementById('replyQuote').textContent = quote.slice(0, 120);
+      document.getElementById('replyText').value = '';
+      const modal = document.getElementById('replyModal');
+      modal.style.display = 'flex';
+      setTimeout(() => document.getElementById('replyText').focus(), 50);
+    }
+
+    function closeReplyModal() {
+      document.getElementById('replyModal').style.display = 'none';
+      replyTarget = null;
+    }
+
+    document.getElementById('sendReplyBtn').addEventListener('click', async () => {
+      const pesan = document.getElementById('replyText').value.trim();
+      if (!pesan) return showToast('Tulis pesan dahulu');
+      if (!replyTarget) return;
+      const btn = document.getElementById('sendReplyBtn');
+      const sp = document.getElementById('replySpinner');
+      btn.disabled = true; sp.style.display = 'inline-block';
+      try {
+        const res = await fetch('/reply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to: replyTarget, pesan })
+        });
+        const data = await res.json();
+        if (data.status === 'ok') {
+          showToast('Balasan terkirim!');
+          closeReplyModal();
+        } else {
+          showToast('Gagal: ' + (data.msg || 'error'));
+        }
+      } catch { showToast('Koneksi error'); }
+      btn.disabled = false; sp.style.display = 'none';
+    });
+
+    document.getElementById('refreshInboxBtn').addEventListener('click', () => { inboxLastTs = 0; inboxAll = []; pollInbox().then(renderInbox); });
+    document.getElementById('clearInboxBtn').addEventListener('click', async () => {
+      try {
+        await fetch('/messages', { method: 'DELETE' });
+        inboxAll = []; inboxLastTs = 0; inboxUnread = 0;
+        const badge = document.getElementById('inboxBadge');
+        if (badge) badge.style.display = 'none';
+        renderInbox();
+        showToast('Pesan dihapus');
+      } catch { showToast('Gagal menghapus'); }
+    });
+
+    function getStats() { return JSON.parse(localStorage.getItem('wa_stats') || '{"totalCek":0,"terdaftar":0,"tidak":0,"kirim":0}'); }
+    function saveStats(s) { localStorage.setItem('wa_stats', JSON.stringify(s)); }
+    function getHistCek() { return JSON.parse(localStorage.getItem('wa_hist_cek') || '[]'); }
+    function getHistKirim() { return JSON.parse(localStorage.getItem('wa_hist_kirim') || '[]'); }
+
+    function renderDashboard() {
+      const s = getStats();
+      document.getElementById('statTotalCek').textContent = s.totalCek;
+      document.getElementById('statTerdaftar').textContent = s.terdaftar;
+      document.getElementById('statTidak').textContent = s.tidak;
+      document.getElementById('statKirim').textContent = s.kirim;
+
+      const hc = getHistCek();
+      const hcBody = document.getElementById('histCekBody');
+      hcBody.innerHTML = hc.length === 0
+        ? '<tr><td colspan="4" class="empty-state">Belum ada riwayat</td></tr>'
+        : hc.slice().reverse().slice(0, 10).map(h => `<tr>
+            <td style="color:var(--text-dim)">${fmtTime(h.ts)}</td>
+            <td>${h.total}</td>
+            <td style="color:var(--success)">${h.terdaftar}</td>
+            <td style="color:var(--danger)">${h.tidak}</td>
+          </tr>`).join('');
+
+      const hk = getHistKirim();
+      const hkBody = document.getElementById('histKirimBody');
+      hkBody.innerHTML = hk.length === 0
+        ? '<tr><td colspan="4" class="empty-state">Belum ada riwayat</td></tr>'
+        : hk.slice().reverse().slice(0, 10).map(h => `<tr>
+            <td style="color:var(--text-dim)">${fmtTime(h.ts)}</td>
+            <td>${h.total}</td>
+            <td style="color:var(--accent)">${h.terkirim}</td>
+            <td style="color:var(--danger)">${h.gagal}</td>
+          </tr>`).join('');
+    }
+    renderDashboard();
+    const pageNames = { dashboard:'Dashboard', rapih:'Rapihkan Nomor', cek:'Cek WA', kirim:'Kirim Pesan', connect:'Connect WA', pesan:'Pesan Masuk' };
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', e => {
+        e.preventDefault();
+        const page = item.dataset.page;
+        const el = document.getElementById('page-' + page);
+        if (!el) return;
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        item.classList.add('active');
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('topbarTitle').textContent = pageNames[page];
+        if (page === 'dashboard') renderDashboard();
+        if (page === 'connect') {
+          loadQr();
+          clearInterval(qrInterval);
+          qrInterval = setInterval(loadQr, 3000);
+        } else {
+          clearInterval(qrInterval);
+          qrInterval = null;
+        }
+        if (page === 'pesan') {
+          inboxUnread = 0;
+          const badge = document.getElementById('inboxBadge');
+          if (badge) badge.style.display = 'none';
+          renderInbox();
+        }
+      });
+    });
+
+    function goToPage(page) {
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.querySelector(`[data-page="${page}"]`).classList.add('active');
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-' + page).classList.add('active');
+      document.getElementById('topbarTitle').textContent = pageNames[page];
+    }
+    document.getElementById('rapihkanBtn').addEventListener('click', () => {
+      const raw = document.getElementById('rapihInput').value.trim();
+      if (!raw) return showToast('Paste nomor di kolom input dulu');
+      const all = raw.split(/[\n,;\t]+/);
+      const cleaned = [], removed = [];
+      all.forEach(n => {
+        const norm = normalizeNumber(n.trim());
+        if (norm && isValidIndonesianMobile(norm)) cleaned.push(norm);
+        else if (n.trim()) removed.push(n.trim());
+      });
+      const unique = [...new Set(cleaned)];
+      const dupes = cleaned.length - unique.length;
+      document.getElementById('rapihOutput').value = unique.join('\n');
+      document.getElementById('rapihOutput08').value = unique.map(n => '0' + n.slice(2)).join('\n');
+      document.getElementById('rapihStats').innerHTML = `
+        <span style="color:var(--success);font-weight:700;">${unique.length} valid</span>
+        ${removed.length > 0 ? `<span style="color:var(--danger);font-weight:700;">${removed.length} dibuang</span>` : ''}
+        ${dupes > 0 ? `<span style="color:var(--warning);font-weight:700;">${dupes} duplikat</span>` : ''}
+      `;
+      showToast(`${unique.length} nomor berhasil dirapihkan`);
+    });
+    document.getElementById('rapihCopyBtn').addEventListener('click', () => {
+      const v = document.getElementById('rapihOutput').value.trim();
+      if (!v) return showToast('Rapihkan nomor dulu');
+      navigator.clipboard.writeText(v).then(() => showToast('Format 62 disalin!')).catch(() => showToast('Gagal menyalin'));
+    });
+    document.getElementById('rapihCopy08Btn').addEventListener('click', () => {
+      const v = document.getElementById('rapihOutput08').value.trim();
+      if (!v) return showToast('Rapihkan nomor dulu');
+      navigator.clipboard.writeText(v).then(() => showToast('Format 08 disalin!')).catch(() => showToast('Gagal menyalin'));
+    });
+    document.getElementById('rapihPasteBtn').addEventListener('click', () => {
+      const v = document.getElementById('rapihOutput').value.trim();
+      if (!v) return showToast('Rapihkan nomor dulu');
+      document.getElementById('nomor').value = v;
+      goToPage('cek');
+      showToast('Nomor dipindahkan ke Cek WA');
+    });
+    function updateLastResult(data, type) {
+      document.getElementById('lastResultEmpty').style.display = 'none';
+      document.getElementById('lastResultTable').style.display = 'block';
+      document.getElementById('lastResultBody').innerHTML = data.slice(0, 20).map((item, i) => {
+        let cls = 'terdaftar';
+        if (item.status.includes('Tidak')) cls = 'tidak-terdaftar';
+        else if (item.status.includes('Error') || item.status === 'Gagal') cls = type === 'kirim' ? 'gagal' : 'error';
+        else if (type === 'kirim') cls = 'terkirim';
+        return `<tr>
+          <td style="color:var(--text-dim)">${i+1}</td>
+          <td>${item.number}</td>
+          <td><span class="badge ${cls}"><span class="badge-dot"></span>${item.status}</span></td>
+          <td style="color:var(--text-dim);font-size:0.6875rem;">${type === 'kirim' ? 'Kirim' : 'Cek'}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    document.getElementById('submitBtn').addEventListener('click', async () => {
+      let nomor = document.getElementById('nomor').value.trim();
+      if (!nomor) return showToast('Masukkan nomor terlebih dahulu');
+      const cleaned = nomor.split(/[\n,;\t]+/).map(n => normalizeNumber(n)).filter(n => n && isValidIndonesianMobile(n));
+      if (cleaned.length === 0) return showToast('Tidak ada nomor valid');
+      document.getElementById('nomor').value = cleaned.join('\n');
+
+      const btn = document.getElementById('submitBtn');
+      const sp = document.getElementById('spinner');
+      const bIcon = btn.querySelector('svg'); const bText = btn.querySelector('span');
+      bIcon.style.display = 'none'; sp.style.display = 'inline-block';
+      bText.textContent = 'Memproses...'; btn.disabled = true;
+
+      document.getElementById('cekHasil').style.display = 'block';
+      document.getElementById('hasilBody').innerHTML = `<tr class="processing-row"><td colspan="3"><div class="process-content"><div class="spinner" style="display:inline-block;border:2px solid rgba(0,212,255,0.2);border-top-color:var(--accent);"></div><span>Sedang mengecek nomor...</span></div></td></tr>`;
+
+      try {
+        const res = await fetch('/cek', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ nomor: cleaned.join('\n') }) });
+        const data = await res.json();
+        if (data.status === 'ok') {
+          let terdaftar = 0, tidak = 0, err = 0;
+          document.getElementById('hasilBody').innerHTML = data.data.map((item, i) => {
+            let cls = 'terdaftar';
+            if (item.status.includes('Tidak')) { cls = 'tidak-terdaftar'; tidak++; }
+            else if (item.status.includes('Error')) { cls = 'error'; err++; }
+            else terdaftar++;
+            return `<tr><td style="color:var(--text-dim)">${i+1}</td><td>${item.number}</td><td><span class="badge ${cls}"><span class="badge-dot"></span>${item.status}</span></td></tr>`;
+          }).join('');
+          document.getElementById('cekStats').innerHTML = `
+            <span style="color:var(--success);font-weight:700;">${terdaftar} Aktif</span>
+            <span style="color:var(--danger);font-weight:700;">${tidak} Tidak</span>
+            ${err > 0 ? `<span style="color:var(--warning);font-weight:700;">${err} Error</span>` : ''}`;
+          const s = getStats(); s.totalCek += data.data.length; s.terdaftar += terdaftar; s.tidak += tidak; saveStats(s);
+          const hc = getHistCek(); hc.push({ ts:Date.now(), total:data.data.length, terdaftar, tidak });
+          if (hc.length > 20) hc.splice(0, hc.length - 20);
+          localStorage.setItem('wa_hist_cek', JSON.stringify(hc));
+          updateLastResult(data.data, 'cek');
+          showToast(`Selesai! ${data.data.length} nomor dicek`);
+        } else {
+          document.getElementById('hasilBody').innerHTML = `<tr class="processing-row"><td colspan="3" style="color:var(--danger);">${data.msg||'Gagal'}</td></tr>`;
+          showToast('Gagal memproses nomor');
+        }
+      } catch {
+        document.getElementById('hasilBody').innerHTML = `<tr class="processing-row"><td colspan="3" style="color:var(--danger);">Koneksi error</td></tr>`;
+        showToast('Koneksi error');
+      }
+      bIcon.style.display = ''; sp.style.display = 'none'; bText.textContent = 'Mulai Cek'; btn.disabled = false;
+    });
+
+    document.getElementById('copyButton').addEventListener('click', () => {
+      const rows = document.querySelectorAll('#hasilBody tr:not(.processing-row)');
+      if (!rows.length) return showToast('Belum ada hasil');
+      let text = '';
+      rows.forEach(r => { const n = r.children[1]?.innerText.trim(); const s = r.children[2]?.innerText.trim(); if (n&&s) text += `${n}\t${s}\n`; });
+      navigator.clipboard.writeText(text).then(() => showToast('Semua hasil disalin!')).catch(() => showToast('Gagal'));
+    });
+    document.getElementById('copyTerdaftarBtn').addEventListener('click', () => {
+      const rows = document.querySelectorAll('#hasilBody tr:not(.processing-row)');
+      let text = '', count = 0;
+      rows.forEach(r => { const n = r.children[1]?.innerText.trim(); const b = r.querySelector('.badge'); if (b?.classList.contains('terdaftar')) { text += n+'\n'; count++; } });
+      if (!count) return showToast('Tidak ada nomor terdaftar');
+      navigator.clipboard.writeText(text).then(() => showToast(`${count} nomor terdaftar disalin!`)).catch(() => showToast('Gagal'));
+    });
+    document.getElementById('copyTidakBtn').addEventListener('click', () => {
+      const rows = document.querySelectorAll('#hasilBody tr:not(.processing-row)');
+      let text = '', count = 0;
+      rows.forEach(r => { const n = r.children[1]?.innerText.trim(); const b = r.querySelector('.badge'); if (b?.classList.contains('tidak-terdaftar')) { text += n+'\n'; count++; } });
+      if (!count) return showToast('Tidak ada nomor tidak terdaftar');
+      navigator.clipboard.writeText(text).then(() => showToast(`${count} nomor disalin!`)).catch(() => showToast('Gagal'));
+    });
+    document.getElementById('kirimBtn').addEventListener('click', async () => {
+      const nomor = document.getElementById('kirimNomor').value.trim();
+      const pesan = document.getElementById('kirimPesan').value.trim();
+      if (!nomor) return showToast('Masukkan nomor tujuan');
+      if (!pesan) return showToast('Tulis pesan terlebih dahulu');
+
+      const btn = document.getElementById('kirimBtn');
+      const sp = document.getElementById('kirimSpinner');
+      const bIcon = btn.querySelector('svg'); const bText = btn.querySelector('span');
+      bIcon.style.display = 'none'; sp.style.display = 'inline-block';
+      bText.textContent = 'Mengirim...'; btn.disabled = true;
+
+      document.getElementById('kirimHasilCard').style.display = 'block';
+      document.getElementById('kirimBody').innerHTML = `<tr class="processing-row"><td colspan="3"><div class="process-content"><div class="spinner" style="display:inline-block;border:2px solid rgba(0,212,255,0.2);border-top-color:var(--accent);"></div><span>Sedang mengirim pesan...</span></div></td></tr>`;
+
+      try {
+        const res = await fetch('/kirim', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ nomor, pesan }) });
+        const data = await res.json();
+        if (data.status === 'ok') {
+          let terkirim = 0, gagal = 0;
+          document.getElementById('kirimBody').innerHTML = data.data.map((item, i) => {
+            const ok = item.status === 'Terkirim';
+            if (ok) terkirim++; else gagal++;
+            return `<tr><td style="color:var(--text-dim)">${i+1}</td><td>${item.number}</td><td><span class="badge ${ok?'terkirim':'gagal'}"><span class="badge-dot"></span>${item.status}</span></td></tr>`;
+          }).join('');
+          document.getElementById('kirimStats').innerHTML = `
+            <span style="color:var(--accent);font-weight:700;">${terkirim} Terkirim</span>
+            ${gagal > 0 ? `<span style="color:var(--danger);font-weight:700;">${gagal} Gagal</span>` : ''}`;
+          const s = getStats(); s.kirim += terkirim; saveStats(s);
+          const hk = getHistKirim(); hk.push({ ts:Date.now(), total:data.data.length, terkirim, gagal });
+          if (hk.length > 20) hk.splice(0, hk.length - 20);
+          localStorage.setItem('wa_hist_kirim', JSON.stringify(hk));
+          updateLastResult(data.data, 'kirim');
+          showToast(`Selesai! ${terkirim} pesan terkirim`);
+        } else {
+          document.getElementById('kirimBody').innerHTML = `<tr class="processing-row"><td colspan="3" style="color:var(--danger);">${data.msg||'Gagal'}</td></tr>`;
+          showToast('Gagal mengirim pesan');
+        }
+      } catch {
+        document.getElementById('kirimBody').innerHTML = `<tr class="processing-row"><td colspan="3" style="color:var(--danger);">Koneksi error</td></tr>`;
+        showToast('Koneksi error');
+      }
+      bIcon.style.display = ''; sp.style.display = 'none'; bText.textContent = 'Kirim Pesan'; btn.disabled = false;
     });
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 </body>
 </html>
