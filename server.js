@@ -55,7 +55,7 @@ function createClient(id, label) {
     }
   });
 
-  const entry = { id, label, instance, status: 'connecting', qr: null, phone: '' };
+  const entry = { id, label, instance, status: 'connecting', qr: null, phone: '', pushname: '' };
   global.clientsMap[id] = entry;
   saveAccountsList();
 
@@ -72,6 +72,7 @@ function createClient(id, label) {
     try {
       const info = instance.info;
       entry.phone = info ? info.wid.user : '';
+      entry.pushname = info ? (info.pushname || '') : '';
     } catch {}
     console.log(`✅ [${label}] WA siap! (${entry.phone})`);
   });
@@ -97,6 +98,8 @@ function createClient(id, label) {
         id: msg.id._serialized,
         accountId: id,
         accountLabel: label,
+        accountPhone: entry.phone || '',
+        accountName: entry.pushname || '',
         from: contact.id.user || msg.from.replace(/@c\.us|@g\.us|@lid/g, ''),
         name: contact.pushname || contact.name || '',
         isGroup: chat.isGroup,
