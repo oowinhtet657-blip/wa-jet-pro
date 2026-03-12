@@ -1,10 +1,55 @@
+# Node modules (dependencies)
 node_modules/
-_IGNORE_session/
-_IGNORE_cek-wa/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Environment & secrets
+.env
+.env.local
+.api_key
+
+# Build & cache
+dist/
+build/
+.cache/
+tmp/
+temp/
+
+# Puppeteer Chromium downloads
+.puppeteer/
+
+# VSCode settings (optional, kalau pakai VSCode)
+.vscode/
+
+# Dependency lock file (optional, kalau hanya pakai yarn/npm saja)
+package-lock.json
+yarn.lock
+
+# WhatsApp session & cache (data sensitif)
+_IGNORE_*/
+_session_*/
 .wwebjs_cache/
 .wwebjs_auth/
-session.data.json
-cek-wa.data.json
+*.data.json
+
+# Runtime data (dibuat otomatis)
+accounts.json
+chat-inbox.json
+chat-sent.json
 hasil/
-*.pma
-.env
+hasil.json
+hasil.xlsx
+hasil.txt
+numbers.json
+
+# Shortcut Git folder di project root (tidak perlu di repo)
+Git/

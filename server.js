@@ -8,7 +8,6 @@ const cekNomor = require('./bot');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Pastikan folder hasil ada
 const folderPath = path.join(__dirname, 'hasil');
 if (!fs.existsSync(folderPath)) {
   fs.mkdirSync(folderPath, { recursive: true });
@@ -18,8 +17,6 @@ if (!fs.existsSync(folderPath)) {
 app.use(express.json());
 app.use(express.static('public'));
 
-// ====== MULTI-AKUN STATE ======
-// clientsMap: { [id]: { id, label, instance, status, qr, phone } }
 global.clientsMap = {};
 global.inboxMessages = [];
 
@@ -127,7 +124,6 @@ function getReadyClient(accountId) {
   return found ? found.instance : null;
 }
 
-// ====== ACCOUNTS API ======
 app.get('/accounts', (req, res) => {
   const list = Object.values(global.clientsMap).map(a => ({
     id: a.id, label: a.label, status: a.status, phone: a.phone, hasQr: !!a.qr
@@ -179,7 +175,6 @@ app.post('/accounts/:id/reconnect', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// ====== STATUS (compat) ======
 app.get('/status', (req, res) => {
   const accounts = Object.values(global.clientsMap);
   const readyCount = accounts.filter(a => a.status === 'ready').length;
