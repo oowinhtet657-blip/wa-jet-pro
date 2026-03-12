@@ -41,8 +41,6 @@ app.listen(PORT, '127.0.0.1', () => {
   console.log(`✅ Server berjalan di http://127.0.0.1:${PORT}`);
   console.log(`🔑 API Key: ${API_KEY}`);
 });
-
-// Cleanup chat history > 2 hari — jalankan tiap jam
 setInterval(runCleanup, 60 * 60 * 1000);
 
 const savedAccounts = loadAccountsList();

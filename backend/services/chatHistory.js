@@ -19,8 +19,6 @@ function writeJson(file, data) {
   catch (e) { console.error('[chatHistory] write error:', e.message); }
 }
 
-// ─── Inbox (pesan masuk) ──────────────────────────────────────────────────────
-
 function loadInboxCache() {
   return filterFresh(readJson(INBOX_CACHE_FILE));
 }
@@ -32,8 +30,6 @@ function saveInboxCache(messages) {
     writeJson(INBOX_CACHE_FILE, filterFresh(messages).slice(0, MAX_ENTRIES));
   }, 1500); // debounce 1.5s agar tidak I/O tiap pesan masuk
 }
-
-// ─── Sent Messages (pesan terkirim) ──────────────────────────────────────────
 
 function loadSentMessages() {
   return filterFresh(readJson(SENT_MSGS_FILE));
@@ -47,8 +43,6 @@ function saveSentMessage(msg) {
   }
   writeJson(SENT_MSGS_FILE, arr.slice(0, MAX_ENTRIES));
 }
-
-// ─── Cleanup (dipanggil tiap jam) ────────────────────────────────────────────
 
 function runCleanup() {
   const inbox = filterFresh(readJson(INBOX_CACHE_FILE));

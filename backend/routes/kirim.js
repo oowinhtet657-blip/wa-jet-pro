@@ -14,8 +14,6 @@ function normalizeNumber(raw) {
 function isValidIndonesianMobile(num) {
   return /^628[0-9]{8,11}$/.test(num);
 }
-
-// POST /kirim
 router.post('/', async (req, res) => {
   try {
     const { nomor, pesan, accountId } = req.body;
@@ -25,8 +23,6 @@ router.post('/', async (req, res) => {
 
     const client = getReadyClient(accountId);
     if (!client) return res.status(503).json({ status: 'error', msg: 'Tidak ada akun WA yang siap' });
-
-    // Cari entry akun yang benar-benar dipakai (untuk label)
     const usedEntry = (accountId && global.clientsMap[accountId]?.status === 'ready')
       ? global.clientsMap[accountId]
       : Object.values(global.clientsMap).find(a => a.status === 'ready');

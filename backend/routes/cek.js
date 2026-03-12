@@ -16,8 +16,6 @@ function normalizeNumber(raw) {
 function isValidIndonesianMobile(num) {
   return /^628[0-9]{8,11}$/.test(num);
 }
-
-// POST /cek
 router.post('/', async (req, res) => {
   try {
     const { nomor, accountId } = req.body;

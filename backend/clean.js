@@ -81,8 +81,6 @@ async function interactiveMenu() {
   }
   console.log('\nSelesai.\n');
 }
-
-// CLI mode
 const arg = process.argv[2];
 if (arg) {
   if (arg === 'all') {

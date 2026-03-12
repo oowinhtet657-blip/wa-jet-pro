@@ -3,9 +3,6 @@ const fs   = require('fs');
 const crypto = require('crypto');
 
 const ROOT = path.join(__dirname, '..', '..');
-
-// ─── API Key ──────────────────────────────────────────────────────────────────
-// Prioritas: env var → file .api_key → buat baru
 const KEY_FILE = path.join(ROOT, '.api_key');
 let API_KEY = process.env.API_KEY || '';
 if (!API_KEY) {

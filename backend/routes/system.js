@@ -6,15 +6,11 @@ const { saveSentMessage } = require('../services/chatHistory');
 const { ROOT, HASIL_DIR } = require('../config');
 
 const router = Router();
-
-// GET /status
 router.get('/status', (req, res) => {
   const accounts   = Object.values(global.clientsMap);
   const readyCount = accounts.filter(a => a.status === 'ready').length;
   res.json({ connected: readyCount > 0, readyCount, totalAccounts: accounts.length });
 });
-
-// GET /qr  (compat — akun pertama)
 router.get('/qr', (req, res) => {
   const accounts = Object.values(global.clientsMap);
   if (accounts.length === 0) return res.json({ status: 'waiting' });
@@ -23,8 +19,6 @@ router.get('/qr', (req, res) => {
   if (first.qr) return res.json({ status: 'qr', qr: first.qr });
   res.json({ status: 'waiting' });
 });
-
-// POST /disconnect  (compat)
 router.post('/disconnect', async (req, res) => {
   const { accountId } = req.body || {};
   if (accountId && global.clientsMap[accountId]) {
@@ -35,8 +29,6 @@ router.post('/disconnect', async (req, res) => {
   }
   res.json({ status: 'ok' });
 });
-
-// POST /reply
 router.post('/reply', async (req, res) => {
   try {
     const { to, pesan, accountId } = req.body;
@@ -62,8 +54,6 @@ router.post('/reply', async (req, res) => {
     res.status(500).json({ status: 'error', msg: 'Terjadi kesalahan server' });
   }
 });
-
-// DELETE /cache
 router.delete('/cache', (req, res) => {
   try {
     const p = path.join(ROOT, '.wwebjs_cache');
@@ -74,8 +64,6 @@ router.delete('/cache', (req, res) => {
     res.status(500).json({ status: 'error', msg: 'Terjadi kesalahan server' });
   }
 });
-
-// DELETE /hasil
 router.delete('/hasil', (req, res) => {
   try {
     if (fs.existsSync(HASIL_DIR)) {

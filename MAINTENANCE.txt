@@ -1,0 +1,137 @@
+================================================================================
+  WA JET-PRO — PANDUAN MAINTENANCE RUTIN
+  Project: c:\Users\KuroX66\check-wa
+  GitHub : https://github.com/oowinhtet657-blip/wa-jet-pro
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  [A] MAINTENANCE HARIAN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [ ] 1. Cek apakah server berjalan normal
+          → Buka browser: http://localhost:3000
+          → Semua akun WA harusnya tampil statusnya
+
+  [ ] 2. Cek status koneksi tiap akun WA di dashboard
+          → Kalau ada yang "Disconnected", klik Reconnect
+          → Kalau QR muncul, scan ulang lewat HP
+
+  [ ] 3. Pantau log error di terminal
+          → Jalankan: npm start
+          → Perhatikan apakah ada pesan "Error" atau "Uncaught Exception"
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  [B] MAINTENANCE MINGGUAN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [ ] 1. Bersihkan cache & session WA lama
+          → Buka terminal di folder project
+          → Jalankan: npm run clean
+          → Tunggu selesai, lalu restart: npm start
+          → Scan ulang QR semua akun jika diminta
+
+  [ ] 2. Cek ukuran file history chat
+          → Cek file: chat-inbox.json dan chat-sent.json
+          → Kalau > 10MB, jalankan npm run clean untuk reset
+          (Otomatis dibersihkan tiap 2 hari, tapi cek manual tetap bagus)
+
+  [ ] 3. Cek folder hasil/
+          → Berisi file CSV hasil cek nomor WA
+          → Hapus file lama yang sudah tidak dibutuhkan
+          → Cara hapus manual: hapus file .csv di folder hasil/
+
+  [ ] 4. Cek apakah ada update package
+          → Jalankan: npm outdated
+          → Lihat daftar package yang ketinggalan versi
+          → Update hati-hati, test dulu setelah update
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  [C] MAINTENANCE BULANAN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [ ] 1. Backup file penting ke tempat aman
+          → File yang wajib di-backup:
+             - accounts.json        (data akun WA tersimpan)
+             - .api_key             (API key server)
+             - chat-inbox.json      (history inbox)
+             - chat-sent.json       (history pesan terkirim)
+          → Copy ke folder backup / Google Drive / USB
+
+  [ ] 2. Push perubahan terbaru ke GitHub
+          → Jalankan:
+             git add .
+             git commit -m "maintenance: [tanggal hari ini]"
+             git push origin main
+          → Cek di: https://github.com/oowinhtet657-blip/wa-jet-pro
+
+  [ ] 3. Cek & rotate API Key (opsional, untuk keamanan)
+          → Hapus file .api_key di folder project
+          → Restart server: npm start
+          → Server akan generate API key baru otomatis
+          → Update API key di semua client yang menggunakannya
+
+  [ ] 4. Review log akses (jika ada)
+          → Pastikan tidak ada request mencurigakan
+          → Rate limit aktif di: 60 req/menit (umum), 10 req/menit (cek & kirim)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  [D] TROUBLESHOOTING CEPAT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  MASALAH: Server tidak bisa start
+  → Cek apakah port 3000 sudah dipakai: netstat -ano | findstr :3000
+  → Matikan proses yang memakai port itu, lalu coba lagi
+
+  MASALAH: Akun WA terus disconnect
+  → Jalankan: npm run clean
+  → Hapus folder session akun yang bermasalah (di _IGNORE_session/)
+  → Restart server dan scan QR ulang
+
+  MASALAH: QR tidak muncul
+  → Refresh halaman browser
+  → Klik tombol "Reconnect" di akun yang bersangkutan
+  → Tunggu 10-15 detik sampai QR generate
+
+  MASALAH: History chat hilang setelah restart
+  → Cek apakah file chat-inbox.json ada di folder project
+  → Kalau tidak ada, berarti baru pertama kali atau sudah terhapus — normal
+
+  MASALAH: Error saat npm install
+  → Jalankan dengan: $env:PUPPETEER_SKIP_DOWNLOAD='true' ; npm install
+  → Ini mencegah Puppeteer download Chrome ulang (sudah ada di sistem)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  [E] PERINTAH PENTING (CHEAT SHEET)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  npm start                    → Jalankan server
+  npm run clean                → Bersihkan cache & session
+  npm outdated                 → Cek update package
+  git status                   → Lihat file yang berubah
+  git add .                    → Staging semua perubahan
+  git commit -m "pesan"        → Commit perubahan
+  git push origin main         → Push ke GitHub
+  git log --oneline -5         → Lihat 5 commit terakhir
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  [F] FILE PENTING & FUNGSINYA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  backend/config/index.js      → Ganti port, path, konfigurasi server
+  backend/routes/              → Tambah / edit endpoint API
+  backend/services/whatsapp.js → Logika event & koneksi WhatsApp
+  backend/services/chatHistory.js → Durasi simpan history (default: 2 hari)
+  backend/middleware/auth.js   → Autentikasi API Key
+  backend/middleware/rateLimiter.js → Batas request per menit
+  public/index.html            → Struktur halaman web
+  public/css/style.css         → Tampilan & warna UI
+  public/js/app.js             → Logika frontend (tombol, fetch, dsb)
+
+================================================================================
+  Last updated: 2026-03-12
+================================================================================
